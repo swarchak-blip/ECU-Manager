@@ -25,10 +25,11 @@
         /* Navigation */
         .navbar { background: var(--card-bg); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         .logo { display: flex; align-items: center; gap: 10px; font-size: 20px; font-weight: 700; color: var(--primary); }
-        .nav-links { display: flex; gap: 15px; }
+        .nav-links { display: flex; gap: 15px; align-items: center; }
         .nav-btn { background: none; border: none; font-size: 14px; font-weight: 600; color: var(--text-muted); cursor: pointer; padding: 10px 15px; border-radius: 6px; transition: all 0.2s; }
         .nav-btn:hover { background: var(--bg-color); color: var(--text-main); }
         .nav-btn.active { background: var(--primary); color: white; }
+        #cloudStatus { font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 20px; background: #e0f2fe; color: #1e40af; margin-left: 20px; }
 
         /* Layout */
         .container { max-width: 1300px; margin: 20px auto; padding: 0 20px; }
@@ -113,6 +114,7 @@
             <button class="nav-btn active" onclick="switchTab('inventory')"><i class="fas fa-boxes"></i> Inventory</button>
             <button class="nav-btn" onclick="switchTab('invoicing')"><i class="fas fa-file-invoice-dollar"></i> Sales & Invoicing</button>
             <button class="nav-btn" onclick="switchTab('reports')"><i class="fas fa-chart-pie"></i> Financial Reports</button>
+            <span id="cloudStatus"><i class="fas fa-cloud"></i> Connecting...</span>
         </div>
     </nav>
 
@@ -160,7 +162,7 @@
                             <label>Quantity to Add</label>
                             <input type="number" id="ecuQty" min="1" value="1" required>
                         </div>
-                        <button type="submit" class="btn"><i class="fas fa-save"></i> Save to Inventory</button>
+                        <button type="submit" class="btn"><i class="fas fa-save"></i> Save to Cloud Inventory</button>
                     </form>
                 </div>
 
@@ -172,7 +174,9 @@
                     <div class="table-responsive">
                         <table>
                             <thead><tr><th>Model (Hover for info)</th><th>Avg Cost</th><th>Retail</th><th>Qty</th><th>Asset Value</th><th>Action</th></tr></thead>
-                            <tbody id="inventoryBody"></tbody>
+                            <tbody id="inventoryBody">
+                                <tr><td colspan="6" style="text-align:center;">Fetching data from cloud...</td></tr>
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -190,7 +194,7 @@
                     </div>
                     <div class="form-group">
                         <label>Select ECU Model</label>
-                        <select id="invItemSelect"><option value="">-- Choose Item --</option></select>
+                        <select id="invItemSelect"><option value="">-- Loading Items --</option></select>
                     </div>
                     <div class="form-group">
                         <label>Quantity</label>
@@ -198,7 +202,7 @@
                     </div>
                     <button class="btn" onclick="addToInvoice()"><i class="fas fa-plus"></i> Add Item</button>
                     <hr style="margin: 25px 0; border-top: 1px solid var(--border);">
-                    <button class="btn btn-success" onclick="finalizeInvoice()"><i class="fas fa-print"></i> Generate & Print Invoice</button>
+                    <button class="btn btn-success" onclick="finalizeInvoice()"><i class="fas fa-print"></i> Generate Invoice & Save to Cloud</button>
                 </div>
 
                 <div class="card">
@@ -219,16 +223,13 @@
         <!-- ================= REPORTS ================= -->
         <div id="view-reports" class="view-section">
             
-            <!-- Financial Control Panel (Backup/Restore/Export) -->
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h2 style="font-size: 20px; color: var(--primary);">Financial Overview</h2>
                 <div style="display: flex; gap: 10px;">
-                    <!-- Backup & Restore Buttons -->
-                    <button class="btn btn-sm" style="background-color: var(--primary);" onclick="downloadBackup()"><i class="fas fa-download"></i> Backup Data</button>
-                    <button class="btn btn-sm" style="background-color: var(--text-muted);" onclick="document.getElementById('backupFileInput').click()"><i class="fas fa-upload"></i> Restore Data</button>
+                    <button class="btn btn-sm" style="background-color: var(--primary);" onclick="downloadBackup()"><i class="fas fa-download"></i> Manual Backup</button>
+                    <button class="btn btn-sm" style="background-color: var(--text-muted);" onclick="document.getElementById('backupFileInput').click()"><i class="fas fa-upload"></i> Restore from Backup</button>
                     <input type="file" id="backupFileInput" accept=".json" style="display: none;" onchange="restoreBackup(event)">
                     
-                    <!-- Export Dropdown -->
                     <div class="dropdown">
                         <button class="btn btn-warning btn-sm"><i class="fas fa-file-excel"></i> Export to Excel <i class="fas fa-chevron-down" style="font-size:10px; margin-left:5px;"></i></button>
                         <div class="dropdown-content">
@@ -240,7 +241,6 @@
                 </div>
             </div>
 
-            <!-- Stat Cards -->
             <div class="report-grid">
                 <div class="stat-card">
                     <div class="stat-title">Current Asset Value</div>
@@ -380,13 +380,81 @@
         const formatCur = (num) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num || 0);
         const escapeCSV = (str) => `"${String(str).replace(/"/g, '""')}"`;
 
-        let inventory = JSON.parse(localStorage.getItem('ecuInventory')) || [];
-        let salesLedger = JSON.parse(localStorage.getItem('ecuSalesLedger')) || []; 
+        // FIREBASE CLOUD DATABASE SETUP
+        const FIREBASE_URL = "https://ecu-manager-a5f4a-default-rtdb.firebaseio.com/data.json";
+
+        let inventory = [];
+        let salesLedger = []; 
         let currentInvoice = [];
         let pieChartInstance = null;
 
         document.getElementById('ecuDate').value = new Date().toISOString().split('T')[0];
 
+        // ================= CLOUD SYNC LOGIC =================
+        async function loadDataFromFirebase() {
+            const status = document.getElementById('cloudStatus');
+            try {
+                const response = await fetch(FIREBASE_URL);
+                const data = await response.json();
+                
+                if (data) {
+                    inventory = data.inventory || [];
+                    salesLedger = data.salesLedger || [];
+                }
+                
+                status.innerHTML = '<i class="fas fa-check-circle"></i> Cloud Synced';
+                status.style.color = '#16a34a';
+                status.style.background = '#dcfce7';
+
+                updateInventoryUI();
+                updateReports();
+                populateInvoiceDropdown();
+
+            } catch (error) {
+                console.error("Error connecting to Firebase:", error);
+                status.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Cloud Offline';
+                status.style.color = '#dc2626';
+                status.style.background = '#fee2e2';
+                alert("Failed to connect to cloud database. Please ensure your Firebase rules are set to TRUE.");
+                
+                // Fallback to local storage if offline
+                inventory = JSON.parse(localStorage.getItem('ecuInventory_backup')) || [];
+                salesLedger = JSON.parse(localStorage.getItem('ecuSales_backup')) || [];
+                updateInventoryUI();
+                updateReports();
+            }
+        }
+
+        async function saveData() { 
+            const status = document.getElementById('cloudStatus');
+            status.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+            
+            const dbState = { inventory: inventory, salesLedger: salesLedger };
+            
+            // Save locally as a backup just in case
+            localStorage.setItem('ecuInventory_backup', JSON.stringify(inventory)); 
+            localStorage.setItem('ecuSales_backup', JSON.stringify(salesLedger)); 
+
+            try {
+                await fetch(FIREBASE_URL, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dbState)
+                });
+                status.innerHTML = '<i class="fas fa-check-circle"></i> Saved to Cloud';
+            } catch (error) {
+                status.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Save Failed';
+                alert("Network error: Could not save to cloud. Data saved locally instead.");
+            }
+        }
+
+        // Initialize App
+        document.addEventListener("DOMContentLoaded", () => {
+            loadDataFromFirebase();
+        });
+
+
+        // ================= NAVIGATION =================
         function switchTab(tabName) {
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
@@ -397,16 +465,13 @@
             if(tabName === 'reports') updateReports();
         }
 
-        // ================= BACKUP & RESTORE =================
+        // ================= MANUAL BACKUP & RESTORE =================
         function downloadBackup() {
-            const dataToBackup = {
-                inventory: inventory,
-                salesLedger: salesLedger
-            };
+            const dataToBackup = { inventory: inventory, salesLedger: salesLedger };
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dataToBackup));
             const downloadAnchorNode = document.createElement('a');
             downloadAnchorNode.setAttribute("href", dataStr);
-            downloadAnchorNode.setAttribute("download", `ECU_Database_Backup_${new Date().toISOString().split('T')[0]}.json`);
+            downloadAnchorNode.setAttribute("download", `ECU_Cloud_Backup_${new Date().toISOString().split('T')[0]}.json`);
             document.body.appendChild(downloadAnchorNode);
             downloadAnchorNode.click();
             downloadAnchorNode.remove();
@@ -417,30 +482,27 @@
             if (!file) return;
 
             const reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = async function(e) {
                 try {
                     const importedData = JSON.parse(e.target.result);
                     if (importedData.inventory && importedData.salesLedger) {
                         inventory = importedData.inventory;
                         salesLedger = importedData.salesLedger;
-                        saveData();
+                        
+                        await saveData(); // Push restored data to cloud
+                        
                         updateInventoryUI();
                         updateReports();
-                        alert("Database restored successfully!");
-                    } else {
-                        alert("Error: Invalid backup file format.");
-                    }
-                } catch (err) {
-                    alert("Error reading backup file.");
-                }
-                // Reset file input so the same file can be uploaded again if needed
+                        alert("Database restored and synced to cloud successfully!");
+                    } else { alert("Error: Invalid backup file format."); }
+                } catch (err) { alert("Error reading backup file."); }
                 document.getElementById('backupFileInput').value = '';
             };
             reader.readAsText(file);
         }
 
         // ================= INVENTORY LOGIC =================
-        document.getElementById('ecuForm').addEventListener('submit', function(e) {
+        document.getElementById('ecuForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const dateStr = document.getElementById('ecuDate').value;
             const nameInput = document.getElementById('ecuName').value.trim();
@@ -474,13 +536,18 @@
                 alert('New ECU added successfully!');
             }
 
-            saveData(); updateInventoryUI(); 
+            await saveData(); 
+            updateInventoryUI(); 
             document.getElementById('ecuForm').reset();
             document.getElementById('ecuDate').value = new Date().toISOString().split('T')[0];
         });
 
-        function deleteItem(id) {
-            if(confirm('Delete this ECU?')) { inventory = inventory.filter(i => i.id !== id); saveData(); updateInventoryUI(); }
+        async function deleteItem(id) {
+            if(confirm('Delete this ECU permanently?')) { 
+                inventory = inventory.filter(i => i.id !== id); 
+                await saveData(); 
+                updateInventoryUI(); 
+            }
         }
 
         function toggleOosList() {
@@ -493,6 +560,11 @@
             const dataList = document.getElementById('ecuList');
             tbody.innerHTML = ''; dataList.innerHTML = '';
             let outOfStockItems = [];
+
+            if(inventory.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Your inventory is empty. Add items above.</td></tr>';
+                return;
+            }
 
             inventory.forEach(item => {
                 item.soldQty = item.soldQty || 0; item.revenue = item.revenue || 0;
@@ -584,7 +656,7 @@
             document.getElementById('pendingTotal').innerText = formatCur(total);
         }
 
-        function finalizeInvoice() {
+        async function finalizeInvoice() {
             if(currentInvoice.length === 0) return;
             const invNum = "INV-" + Math.floor(10000 + Math.random() * 90000);
             const customerName = document.getElementById('invCustomer').value || "Walk-in";
@@ -612,7 +684,9 @@
             document.getElementById('docCustomer').innerText = customerName; document.getElementById('docInvoiceBody').innerHTML = docBody;
             document.getElementById('docTotal').innerText = formatCur(grandTotal);
             
-            saveData(); updateInventoryUI();
+            await saveData(); 
+            updateInventoryUI();
+            
             document.body.classList.add('print-invoice'); window.print();
             setTimeout(() => { document.body.classList.remove('print-invoice'); currentInvoice = []; renderPendingInvoice(); populateInvoiceDropdown(); }, 1000);
         }
@@ -701,12 +775,6 @@
                 pieChartInstance = new Chart(ctx, { type: 'doughnut', data: { labels: chartLabels, datasets: [{ data: chartData, backgroundColor: ['#1e3a8a', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'], borderWidth: 1 }] }, options: { responsive: true, plugins: { legend: { position: 'right' } } } });
             }
         }
-
-        function saveData() { 
-            localStorage.setItem('ecuInventory', JSON.stringify(inventory)); 
-            localStorage.setItem('ecuSalesLedger', JSON.stringify(salesLedger)); 
-        }
-        updateInventoryUI(); 
     </script>
 </body>
 </html>
