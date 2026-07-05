@@ -6,18 +6,14 @@
     <title>Generator ECU Management System</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
-    <!-- Firebase Auth & Core SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
     <style>
         :root {
             --primary: #1e3a8a; --primary-hover: #172554;
-            --success: #16a34a; --danger: #dc2626;
+            --success: #16a34a; --success-hover: #15803d;
+            --danger: #dc2626; --danger-hover: #b91c1c;
             --warning: #f59e0b; --bg-color: #f8fafc;
             --card-bg: #ffffff; --text-main: #0f172a;
             --text-muted: #64748b; --border: #e2e8f0;
@@ -33,73 +29,74 @@
         .nav-btn { background: none; border: none; font-size: 14px; font-weight: 600; color: var(--text-muted); cursor: pointer; padding: 10px 15px; border-radius: 6px; transition: all 0.2s; }
         .nav-btn:hover { background: var(--bg-color); color: var(--text-main); }
         .nav-btn.active { background: var(--primary); color: white; }
-        
-        #cloudStatus { font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 20px; background: #e0f2fe; color: #1e40af; margin-left: 10px; }
-        #authBtn { border: 1px solid var(--primary); color: var(--primary); padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; background: transparent; transition: 0.2s; }
-        #authBtn:hover { background: var(--primary); color: white; }
+        #cloudStatus { font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 20px; background: #e0f2fe; color: #1e40af; margin-left: 20px; }
 
-        /* Layout & Alerts */
+        /* Layout */
         .container { max-width: 1300px; margin: 20px auto; padding: 0 20px; }
         .view-section { display: none; }
-        .view-section.active { display: block; animation: fadeIn 0.3s; }
+        .view-section.active { display: block; animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        .alert { background: #fef2f2; border: 1px solid #fecaca; border-left: 4px solid var(--danger); color: var(--danger); padding: 15px; margin-bottom: 20px; border-radius: 6px; font-size: 14px; cursor: pointer; }
+        /* Alerts */
+        .alert { background: #fef2f2; border: 1px solid #fecaca; border-left: 4px solid var(--danger); color: var(--danger); padding: 15px; margin-bottom: 20px; border-radius: 6px; font-weight: 500; font-size: 14px; cursor: pointer; transition: 0.2s; }
         .alert-header { display: flex; justify-content: space-between; align-items: center; }
         #oosList { margin-top: 15px; padding-left: 30px; display: none; border-top: 1px solid #fecaca; padding-top: 15px; }
 
-        /* Forms & Cards */
+        /* Cards & Forms */
         .grid-layout { display: grid; grid-template-columns: 350px 1fr; gap: 20px; }
         .card { background: var(--card-bg); border-radius: 8px; padding: 25px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        .card-title { font-size: 16px; font-weight: 600; margin-bottom: 20px; color: var(--text-main); border-bottom: 2px solid var(--bg-color); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center;}
+        .card-title { font-size: 16px; font-weight: 600; margin-bottom: 20px; color: var(--text-main); border-bottom: 2px solid var(--bg-color); padding-bottom: 10px; display: flex; align-items: center; justify-content: space-between;}
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--text-muted); }
         .form-group input, .form-group select { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; outline: none; }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
 
-        .btn { width: 100%; padding: 12px; background-color: var(--primary); color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; display: inline-flex; justify-content: center; align-items: center; gap: 8px; }
-        .btn:disabled { background-color: #cbd5e1 !important; cursor: not-allowed; }
+        /* Buttons & Dropdowns */
+        .btn { width: 100%; padding: 12px; background-color: var(--primary); color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.2s; display: inline-flex; justify-content: center; align-items: center; gap: 8px; }
         .btn-sm { width: auto; padding: 8px 12px; font-size: 13px; }
+        .btn:hover { opacity: 0.9; }
         .btn-success { background-color: var(--success); }
         .btn-danger { background-color: var(--danger); }
         .btn-warning { background-color: var(--success); color: white; }
 
-        /* Dropdown */
         .dropdown { position: relative; display: inline-block; }
-        .dropdown-content { display: none; position: absolute; right: 0; background-color: white; min-width: 220px; box-shadow: 0px 8px 16px rgba(0,0,0,0.1); border-radius: 6px; border: 1px solid var(--border); overflow: hidden; z-index: 20; }
-        .dropdown-content a { color: var(--text-main); padding: 12px 16px; text-decoration: none; display: block; font-size: 13px; font-weight: 500; border-bottom: 1px solid var(--bg-color); cursor: pointer;}
+        .dropdown-content { display: none; position: absolute; right: 0; background-color: white; min-width: 220px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.1); z-index: 1; border-radius: 6px; border: 1px solid var(--border); overflow: hidden; }
+        .dropdown-content a { color: var(--text-main); padding: 12px 16px; text-decoration: none; display: block; font-size: 13px; font-weight: 500; border-bottom: 1px solid var(--bg-color); cursor: pointer; transition: 0.2s;}
         .dropdown-content a:hover { background-color: var(--bg-color); color: var(--primary); }
         .dropdown:hover .dropdown-content { display: block; }
 
-        /* Tables */
+        /* Tables & Icons */
         .table-responsive { overflow-x: auto; max-height: 400px; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
-        th { background-color: var(--bg-color); font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; position: sticky; top: 0; }
+        th { background-color: var(--bg-color); font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; position: sticky; top: 0; z-index: 10; }
         .badge { background: var(--bg-color); padding: 4px 10px; border-radius: 20px; font-weight: 600; font-size: 12px; border: 1px solid var(--border); }
         .badge-danger { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
-        .info-icon { display: none; color: var(--primary); cursor: pointer; margin-left: 8px; font-size: 16px; }
-        tr:hover .info-icon { display: inline-block; }
+        
+        .inv-row .info-icon { display: none; color: var(--primary); cursor: pointer; margin-left: 8px; font-size: 16px; }
+        .inv-row:hover .info-icon { display: inline-block; }
 
-        /* Reports */
+        /* Reports Dashboard */
         .report-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
         .stat-card { background: var(--card-bg); padding: 20px; border-radius: 8px; border: 1px solid var(--border); }
         .stat-title { font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 600; }
         .stat-value { font-size: 24px; font-weight: 700; color: var(--text-main); margin-top: 10px; }
         .charts-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
         .full-width-card { grid-column: 1 / -1; }
+        
         .pnl-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px dashed var(--border); font-size: 15px; }
         .pnl-row.total { font-weight: 700; font-size: 18px; border-bottom: none; border-top: 2px solid var(--text-main); margin-top: 10px; padding-top: 15px; }
 
         /* Modals */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
-        .modal-content { background-color: #fff; margin: 10% auto; padding: 25px; border-radius: 8px; width: 600px; max-width: 90%; position: relative; }
+        .modal-content { background-color: #fff; margin: 5% auto; padding: 25px; border-radius: 8px; width: 600px; max-width: 90%; position: relative; }
         .close-btn { position: absolute; right: 20px; top: 20px; font-size: 24px; cursor: pointer; color: var(--text-muted); }
 
         /* Print Documents */
-        .print-doc { display: none; background: white; padding: 40px; margin-top: 20px; border-radius: 8px; color: #333; }
+        .print-doc { display: none; background: white; padding: 40px; margin-top: 20px; border-radius: 8px; border: 1px solid var(--border); color: #333; }
         .doc-header { display: flex; justify-content: space-between; margin-bottom: 40px; border-bottom: 3px solid var(--primary); padding-bottom: 20px; }
         .doc-table th { background: var(--primary) !important; color: white !important; }
+        
         @media print {
             @page { margin: 10mm; size: A4; }
             body { background: white; padding: 0; }
@@ -117,13 +114,13 @@
             <button class="nav-btn active" onclick="switchTab('inventory')"><i class="fas fa-boxes"></i> Inventory</button>
             <button class="nav-btn" onclick="switchTab('invoicing')"><i class="fas fa-file-invoice-dollar"></i> Sales & Invoicing</button>
             <button class="nav-btn" onclick="switchTab('reports')"><i class="fas fa-chart-pie"></i> Financial Reports</button>
-            <span id="cloudStatus"><i class="fas fa-cloud"></i> Loading...</span>
-            <button id="authBtn" onclick="toggleAuthModal()">Login (Admin)</button>
+            <span id="cloudStatus"><i class="fas fa-cloud"></i> Connecting...</span>
         </div>
     </nav>
 
     <div class="container">
         
+        <!-- Alerts -->
         <div id="stockAlert" class="alert" style="display:none;" onclick="toggleOosList()">
             <div class="alert-header">
                 <div><i class="fas fa-exclamation-triangle"></i> <strong id="oosCountText">0</strong> item(s) require restock!</div>
@@ -138,26 +135,41 @@
                 <div class="card">
                     <div class="card-title"><span><i class="fas fa-plus-circle"></i> Add/Update ECU</span></div>
                     <form id="ecuForm">
-                        <div class="form-group"><label>Date Purchased</label><input type="date" id="ecuDate" required></div>
+                        <div class="form-group">
+                            <label>Date Purchased</label>
+                            <input type="date" id="ecuDate" required>
+                        </div>
                         <div class="form-group">
                             <label>ECU Model Name</label>
-                            <input type="text" id="ecuName" list="ecuList" placeholder="e.g., DSE 7320" required autocomplete="off">
+                            <input type="text" id="ecuName" list="ecuList" placeholder="Start typing... e.g., DSE 7320" required autocomplete="off">
                             <datalist id="ecuList"></datalist>
                         </div>
-                        <div class="form-group"><label>Compatibility</label><input type="text" id="ecuCompat" required></div>
-                        <div class="form-row">
-                            <div class="form-group"><label>Unit Cost ($)</label><input type="number" id="ecuCost" step="0.01" min="0" required></div>
-                            <div class="form-group"><label>Retail Price ($)</label><input type="number" id="ecuRetail" step="0.01" min="0" required></div>
+                        <div class="form-group">
+                            <label>Compatibility</label>
+                            <input type="text" id="ecuCompat" placeholder="e.g., Cummins, Perkins" required>
                         </div>
-                        <div class="form-group"><label>Quantity to Add</label><input type="number" id="ecuQty" min="1" value="1" required></div>
-                        <button type="submit" class="btn admin-only-btn" disabled><i class="fas fa-lock"></i> Login to Add Stock</button>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Unit Cost ($)</label>
+                                <input type="number" id="ecuCost" step="0.01" min="0" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Retail Price ($)</label>
+                                <input type="number" id="ecuRetail" step="0.01" min="0" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Quantity to Add</label>
+                            <input type="number" id="ecuQty" min="1" value="1" required>
+                        </div>
+                        <button type="submit" class="btn"><i class="fas fa-save"></i> Save to Cloud Inventory</button>
                     </form>
                 </div>
 
                 <div class="card">
                     <div class="card-title">
                         <span><i class="fas fa-list"></i> Current Stock</span>
-                        <button class="btn btn-warning btn-sm" style="background:#dc2626;" onclick="downloadInventoryPDF()"><i class="fas fa-file-pdf"></i> PDF</button>
+                        <button class="btn btn-warning btn-sm" style="background:#dc2626;" onclick="downloadInventoryPDF()"><i class="fas fa-file-pdf"></i> PDF Report</button>
                     </div>
                     <div class="table-responsive">
                         <table>
@@ -176,12 +188,21 @@
             <div class="grid-layout">
                 <div class="card">
                     <div class="card-title"><span><i class="fas fa-cart-plus"></i> Build Invoice</span></div>
-                    <div class="form-group"><label>Customer Name</label><input type="text" id="invCustomer"></div>
-                    <div class="form-group"><label>Select ECU Model</label><select id="invItemSelect"><option value="">-- Loading Items --</option></select></div>
-                    <div class="form-group"><label>Quantity</label><input type="number" id="invQty" min="1" value="1"></div>
-                    <button class="btn admin-only-btn" disabled onclick="addToInvoice()"><i class="fas fa-lock"></i> Login to Build Invoice</button>
+                    <div class="form-group">
+                        <label>Customer Name</label>
+                        <input type="text" id="invCustomer" placeholder="Enter Customer Name">
+                    </div>
+                    <div class="form-group">
+                        <label>Select ECU Model</label>
+                        <select id="invItemSelect"><option value="">-- Loading Items --</option></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Quantity</label>
+                        <input type="number" id="invQty" min="1" value="1">
+                    </div>
+                    <button class="btn" onclick="addToInvoice()"><i class="fas fa-plus"></i> Add Item</button>
                     <hr style="margin: 25px 0; border-top: 1px solid var(--border);">
-                    <button class="btn btn-success admin-only-btn" disabled onclick="finalizeInvoice()"><i class="fas fa-lock"></i> Generate & Save</button>
+                    <button class="btn btn-success" onclick="finalizeInvoice()"><i class="fas fa-print"></i> Generate Invoice & Save to Cloud</button>
                 </div>
 
                 <div class="card">
@@ -201,15 +222,16 @@
 
         <!-- ================= REPORTS ================= -->
         <div id="view-reports" class="view-section">
+            
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h2 style="font-size: 20px; color: var(--primary);">Financial Overview</h2>
                 <div style="display: flex; gap: 10px;">
-                    <button class="btn btn-sm" style="background-color: var(--primary);" onclick="downloadBackup()"><i class="fas fa-download"></i> Backup</button>
-                    <button class="btn btn-sm admin-only-btn" style="background-color: var(--text-muted);" disabled onclick="document.getElementById('backupFileInput').click()"><i class="fas fa-lock"></i> Restore</button>
+                    <button class="btn btn-sm" style="background-color: var(--primary);" onclick="downloadBackup()"><i class="fas fa-download"></i> Manual Backup</button>
+                    <button class="btn btn-sm" style="background-color: var(--text-muted);" onclick="document.getElementById('backupFileInput').click()"><i class="fas fa-upload"></i> Restore from Backup</button>
                     <input type="file" id="backupFileInput" accept=".json" style="display: none;" onchange="restoreBackup(event)">
                     
                     <div class="dropdown">
-                        <button class="btn btn-warning btn-sm"><i class="fas fa-file-excel"></i> Export to Excel <i class="fas fa-chevron-down"></i></button>
+                        <button class="btn btn-warning btn-sm"><i class="fas fa-file-excel"></i> Export to Excel <i class="fas fa-chevron-down" style="font-size:10px; margin-left:5px;"></i></button>
                         <div class="dropdown-content">
                             <a onclick="exportExcel('inventory')"><i class="fas fa-boxes" style="color:#16a34a; width:20px;"></i> Export Inventory</a>
                             <a onclick="exportExcel('sales_ledger')"><i class="fas fa-file-invoice-dollar" style="color:#16a34a; width:20px;"></i> Export Sales Ledger</a>
@@ -220,10 +242,26 @@
             </div>
 
             <div class="report-grid">
-                <div class="stat-card"><div class="stat-title">Asset Value</div><div class="stat-value" id="repAssetVal" style="color: var(--primary);">$0.00</div></div>
-                <div class="stat-card"><div class="stat-title">Gross Revenue</div><div class="stat-value" id="repTotalRev">$0.00</div></div>
-                <div class="stat-card"><div class="stat-title">Units Sold</div><div class="stat-value" id="repTotalSold">0</div></div>
-                <div class="stat-card" style="background: #f0fdf4; border-color: #bbf7d0;"><div class="stat-title" style="color: var(--success);">Net Profit</div><div class="stat-value" id="repTotalProfit" style="color: var(--success);">$0.00</div></div>
+                <div class="stat-card">
+                    <div class="stat-title">Current Asset Value</div>
+                    <div class="stat-value" id="repAssetVal" style="color: var(--primary);">$0.00</div>
+                    <div style="font-size: 11px; color: var(--text-muted);">Total Value of stock (Avg Cost)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">Gross Revenue</div>
+                    <div class="stat-value" id="repTotalRev">$0.00</div>
+                    <div style="font-size: 11px; color: var(--text-muted);">Total Sales (All Time)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">Units Sold</div>
+                    <div class="stat-value" id="repTotalSold">0</div>
+                    <div style="font-size: 11px; color: var(--text-muted);">Individual ECUs sold</div>
+                </div>
+                <div class="stat-card" style="background: #f0fdf4; border-color: #bbf7d0;">
+                    <div class="stat-title" style="color: var(--success);">Net Profit</div>
+                    <div class="stat-value" id="repTotalProfit" style="color: var(--success);">$0.00</div>
+                    <div style="font-size: 11px; color: var(--success);">Revenue minus COGS</div>
+                </div>
             </div>
 
             <div class="charts-grid">
@@ -248,19 +286,24 @@
                 </div>
 
                 <div class="card full-width-card">
-                    <div class="card-title"><span><i class="fas fa-file-invoice"></i> Overall Sales Ledger</span></div>
+                    <div class="card-title"><span><i class="fas fa-file-invoice"></i> Overall Sales Ledger (Invoices)</span></div>
                     <div class="table-responsive">
                         <table>
-                            <thead><tr><th>Date</th><th>Invoice #</th><th>Customer Name</th><th>Items Sold</th><th>Total Value</th></tr></thead>
+                            <thead>
+                                <tr><th>Date</th><th>Invoice #</th><th>Customer Name</th><th>Items Sold</th><th>Total Value</th></tr>
+                            </thead>
                             <tbody id="salesLedgerBody"></tbody>
                         </table>
                     </div>
                 </div>
+
                 <div class="card full-width-card">
-                    <div class="card-title"><span><i class="fas fa-box-open"></i> Sales Report (Per Item)</span></div>
+                    <div class="card-title"><span><i class="fas fa-box-open"></i> Comprehensive Sales Report (Per Item)</span></div>
                     <div class="table-responsive">
                         <table>
-                            <thead><tr><th>Model</th><th>Total Sold</th><th>Gross Revenue</th><th>Total COGS</th><th>Net Profit</th></tr></thead>
+                            <thead>
+                                <tr><th>Model</th><th>Total Sold (Qty)</th><th>Gross Revenue</th><th>Total COGS</th><th>Net Profit</th></tr>
+                            </thead>
                             <tbody id="itemSalesBody"></tbody>
                         </table>
                     </div>
@@ -269,21 +312,9 @@
         </div>
 
         <!-- ================= MODALS & DOCS ================= -->
-        <!-- Auth Login Modal -->
-        <div id="loginModal" class="modal">
-            <div class="modal-content" style="width: 400px;">
-                <span class="close-btn" onclick="document.getElementById('loginModal').style.display='none'">&times;</span>
-                <h3 style="margin-bottom: 20px; color: var(--primary);">Admin Login</h3>
-                <div class="form-group"><label>Email</label><input type="email" id="authEmail" placeholder="admin@ecu.com"></div>
-                <div class="form-group"><label>Password</label><input type="password" id="authPassword"></div>
-                <button class="btn" onclick="loginAdmin()">Sign In</button>
-            </div>
-        </div>
-
-        <!-- History Modal -->
         <div id="historyModal" class="modal">
             <div class="modal-content">
-                <span class="close-btn" onclick="document.getElementById('historyModal').style.display='none'">&times;</span>
+                <span class="close-btn" onclick="closeModal()">&times;</span>
                 <h3 style="margin-bottom: 20px; color: var(--primary);" id="histTitle">Movement History</h3>
                 <div class="table-responsive">
                     <table>
@@ -294,26 +325,51 @@
             </div>
         </div>
 
-        <!-- Hidden Print Templates -->
         <div id="invoice-document" class="print-doc">
             <div class="doc-header">
-                <div><h1>ECU MANAGER PRO</h1><p>123 Generator Avenue, Power City, TX</p></div>
-                <div style="text-align: right;"><h2 style="color:#ccc; margin-bottom: 5px;">INVOICE</h2><strong>Invoice #:</strong> <span id="docInvNum"></span><br><strong>Date:</strong> <span id="docDate"></span></div>
+                <div>
+                    <h1>ECU MANAGER PRO</h1>
+                    <p>123 Generator Avenue, Power City, TX 75000</p>
+                </div>
+                <div style="text-align: right;">
+                    <h2 style="color:#ccc; margin-bottom: 5px;">INVOICE</h2>
+                    <strong>Invoice #:</strong> <span id="docInvNum"></span><br>
+                    <strong>Date:</strong> <span id="docDate"></span>
+                </div>
             </div>
-            <div style="margin-bottom: 30px;"><h3 style="font-size: 14px; color: #666; border-bottom: 1px solid #ccc; padding-bottom:5px; margin-bottom:5px;">Bill To:</h3><strong><span id="docCustomer"></span></strong></div>
+            <div style="margin-bottom: 30px;">
+                <h3 style="font-size: 14px; color: #666; border-bottom: 1px solid #ccc; padding-bottom:5px; margin-bottom:5px;">Bill To:</h3>
+                <strong><span id="docCustomer"></span></strong>
+            </div>
             <table class="doc-table" style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-                <thead><tr><th style="padding:10px; border:1px solid #000; text-align:left;">Item Description</th><th style="padding:10px; border:1px solid #000; text-align:right;">Price</th><th style="padding:10px; border:1px solid #000; text-align:center;">Qty</th><th style="padding:10px; border:1px solid #000; text-align:right;">Line Total</th></tr></thead>
+                <thead>
+                    <tr>
+                        <th style="padding:10px; border:1px solid #000; text-align:left;">Item Description</th>
+                        <th style="padding:10px; border:1px solid #000; text-align:right;">Price</th>
+                        <th style="padding:10px; border:1px solid #000; text-align:center;">Qty</th>
+                        <th style="padding:10px; border:1px solid #000; text-align:right;">Line Total</th>
+                    </tr>
+                </thead>
                 <tbody id="docInvoiceBody"></tbody>
             </table>
-            <div style="text-align: right; font-size: 18px; margin-top: 20px;"><strong>Total Due: <span id="docTotal" style="color:var(--primary);"></span></strong></div>
+            <div style="text-align: right; font-size: 18px; margin-top: 20px;">
+                <strong>Total Due: <span id="docTotal" style="color:var(--primary);"></span></strong>
+            </div>
         </div>
 
         <div id="inventory-document" style="display: none; background: white; padding: 20px; color: black; font-family: sans-serif;">
             <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #1e3a8a; padding-bottom: 10px; margin-bottom: 20px;">
-                <div><h1 style="color: #1e3a8a; margin:0;">INVENTORY STATUS REPORT</h1></div><div style="text-align: right;"><strong>Date:</strong> <span id="docInvRepDate"></span></div>
+                <div><h1 style="color: #1e3a8a; margin:0;">INVENTORY STATUS REPORT</h1></div>
+                <div style="text-align: right;"><strong>Date:</strong> <span id="docInvRepDate"></span></div>
             </div>
             <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
-                <thead><tr style="background: #1e3a8a; color: white;"><th style="padding:8px; border:1px solid #ccc; text-align:left;">Model Name</th><th style="padding:8px; border:1px solid #ccc; text-align:center;">In Stock</th><th style="padding:8px; border:1px solid #ccc; text-align:right;">Asset Value</th></tr></thead>
+                <thead>
+                    <tr style="background: #1e3a8a; color: white;">
+                        <th style="padding:8px; border:1px solid #ccc; text-align:left;">Model Name</th>
+                        <th style="padding:8px; border:1px solid #ccc; text-align:center;">In Stock</th>
+                        <th style="padding:8px; border:1px solid #ccc; text-align:right;">Asset Value</th>
+                    </tr>
+                </thead>
                 <tbody id="docInventoryBody"></tbody>
             </table>
         </div>
@@ -324,87 +380,20 @@
         const formatCur = (num) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num || 0);
         const escapeCSV = (str) => `"${String(str).replace(/"/g, '""')}"`;
 
-        // ================= FIREBASE SETUP =================
-        // Replace YOUR_API_KEY_HERE with the API key from your Firebase Project Settings
-        const firebaseConfig = {
-            apiKey: "AIzaSyCYswjDisG6BByRalql4YwA-qv0TjLNNFY", 
-            databaseURL: "https://ecu-manager-a5f4a-default-rtdb.firebaseio.com"
-        };
-        
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const FIREBASE_URL = firebaseConfig.databaseURL + "/data.json";
+        // FIREBASE CLOUD DATABASE SETUP
+        const FIREBASE_URL = "https://ecu-manager-a5f4a-default-rtdb.firebaseio.com/data.json";
 
         let inventory = [];
         let salesLedger = []; 
         let currentInvoice = [];
         let pieChartInstance = null;
-        let authToken = null;
-        let isAdmin = false;
 
         document.getElementById('ecuDate').value = new Date().toISOString().split('T')[0];
-
-        // ================= AUTHENTICATION LOGIC =================
-        auth.onAuthStateChanged(async (user) => {
-            const authBtn = document.getElementById('authBtn');
-            const adminBtns = document.querySelectorAll('.admin-only-btn');
-            
-            if (user) {
-                // User is Logged In
-                authToken = await user.getIdToken();
-                isAdmin = true;
-                authBtn.innerText = "Logout";
-                
-                // Enable Write Buttons
-                adminBtns.forEach(btn => {
-                    btn.disabled = false;
-                    if(btn.innerHTML.includes('Add Stock')) btn.innerHTML = '<i class="fas fa-save"></i> Save to Cloud';
-                    if(btn.innerHTML.includes('Build Invoice')) btn.innerHTML = '<i class="fas fa-plus"></i> Add Item';
-                    if(btn.innerHTML.includes('Generate')) btn.innerHTML = '<i class="fas fa-print"></i> Generate Invoice & Save';
-                    if(btn.innerHTML.includes('Restore')) btn.innerHTML = '<i class="fas fa-upload"></i> Restore from Backup';
-                });
-            } else {
-                // User is Logged Out (Read Only Mode)
-                authToken = null;
-                isAdmin = false;
-                authBtn.innerText = "Login (Admin)";
-                
-                // Disable Write Buttons
-                adminBtns.forEach(btn => {
-                    btn.disabled = true;
-                    if(btn.innerHTML.includes('Save to Cloud')) btn.innerHTML = '<i class="fas fa-lock"></i> Login to Add Stock';
-                    if(btn.innerHTML.includes('Add Item')) btn.innerHTML = '<i class="fas fa-lock"></i> Login to Build Invoice';
-                    if(btn.innerHTML.includes('Generate Invoice')) btn.innerHTML = '<i class="fas fa-lock"></i> Login to Generate';
-                    if(btn.innerHTML.includes('Restore')) btn.innerHTML = '<i class="fas fa-lock"></i> Login to Restore';
-                });
-            }
-            updateInventoryUI(); // Refresh UI to hide/show delete buttons
-        });
-
-        function toggleAuthModal() {
-            if (isAdmin) {
-                auth.signOut().then(() => alert("Logged out successfully. App is now Read-Only."));
-            } else {
-                document.getElementById('loginModal').style.display = 'block';
-            }
-        }
-
-        function loginAdmin() {
-            const email = document.getElementById('authEmail').value;
-            const pass = document.getElementById('authPassword').value;
-            auth.signInWithEmailAndPassword(email, pass)
-                .then(() => {
-                    document.getElementById('loginModal').style.display = 'none';
-                    alert("Welcome Admin! You now have write access.");
-                })
-                .catch(error => alert("Login Failed: " + error.message));
-        }
 
         // ================= CLOUD SYNC LOGIC =================
         async function loadDataFromFirebase() {
             const status = document.getElementById('cloudStatus');
             try {
-                // Read is Public, so no authToken required here
                 const response = await fetch(FIREBASE_URL);
                 const data = await response.json();
                 
@@ -412,33 +401,42 @@
                     inventory = data.inventory || [];
                     salesLedger = data.salesLedger || [];
                 }
+                
                 status.innerHTML = '<i class="fas fa-check-circle"></i> Cloud Synced';
-                status.style.color = '#16a34a'; status.style.background = '#dcfce7';
+                status.style.color = '#16a34a';
+                status.style.background = '#dcfce7';
 
-                updateInventoryUI(); updateReports(); populateInvoiceDropdown();
+                updateInventoryUI();
+                updateReports();
+                populateInvoiceDropdown();
+
             } catch (error) {
-                status.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Offline';
-                status.style.color = '#dc2626'; status.style.background = '#fee2e2';
-                // Fallback
+                console.error("Error connecting to Firebase:", error);
+                status.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Cloud Offline';
+                status.style.color = '#dc2626';
+                status.style.background = '#fee2e2';
+                alert("Failed to connect to cloud database. Please ensure your Firebase rules are set to TRUE.");
+                
+                // Fallback to local storage if offline
                 inventory = JSON.parse(localStorage.getItem('ecuInventory_backup')) || [];
                 salesLedger = JSON.parse(localStorage.getItem('ecuSales_backup')) || [];
-                updateInventoryUI(); updateReports();
+                updateInventoryUI();
+                updateReports();
             }
         }
 
         async function saveData() { 
-            if (!isAdmin) return alert("You must be logged in to save data to the cloud.");
-
             const status = document.getElementById('cloudStatus');
             status.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
             
             const dbState = { inventory: inventory, salesLedger: salesLedger };
+            
+            // Save locally as a backup just in case
             localStorage.setItem('ecuInventory_backup', JSON.stringify(inventory)); 
             localStorage.setItem('ecuSales_backup', JSON.stringify(salesLedger)); 
 
             try {
-                // Write requires Auth Token
-                await fetch(`${FIREBASE_URL}?auth=${authToken}`, {
+                await fetch(FIREBASE_URL, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(dbState)
@@ -446,26 +444,66 @@
                 status.innerHTML = '<i class="fas fa-check-circle"></i> Saved to Cloud';
             } catch (error) {
                 status.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Save Failed';
-                alert("Network error: Could not save to cloud.");
+                alert("Network error: Could not save to cloud. Data saved locally instead.");
             }
         }
 
-        document.addEventListener("DOMContentLoaded", () => loadDataFromFirebase());
+        // Initialize App
+        document.addEventListener("DOMContentLoaded", () => {
+            loadDataFromFirebase();
+        });
 
+
+        // ================= NAVIGATION =================
         function switchTab(tabName) {
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
             document.getElementById(`view-${tabName}`).classList.add('active');
             event.currentTarget.classList.add('active');
+
             if(tabName === 'invoicing') populateInvoiceDropdown();
             if(tabName === 'reports') updateReports();
+        }
+
+        // ================= MANUAL BACKUP & RESTORE =================
+        function downloadBackup() {
+            const dataToBackup = { inventory: inventory, salesLedger: salesLedger };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dataToBackup));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", `ECU_Cloud_Backup_${new Date().toISOString().split('T')[0]}.json`);
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+
+        function restoreBackup(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    if (importedData.inventory && importedData.salesLedger) {
+                        inventory = importedData.inventory;
+                        salesLedger = importedData.salesLedger;
+                        
+                        await saveData(); // Push restored data to cloud
+                        
+                        updateInventoryUI();
+                        updateReports();
+                        alert("Database restored and synced to cloud successfully!");
+                    } else { alert("Error: Invalid backup file format."); }
+                } catch (err) { alert("Error reading backup file."); }
+                document.getElementById('backupFileInput').value = '';
+            };
+            reader.readAsText(file);
         }
 
         // ================= INVENTORY LOGIC =================
         document.getElementById('ecuForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            if(!isAdmin) return;
-
             const dateStr = document.getElementById('ecuDate').value;
             const nameInput = document.getElementById('ecuName').value.trim();
             const compat = document.getElementById('ecuCompat').value.trim();
@@ -482,25 +520,34 @@
                 const newTotalQty = (existingItem.qty > 0 ? existingItem.qty : 0) + addedQty;
                 const averageCost = (currentTotalValue + newAddedValue) / newTotalQty;
 
-                existingItem.qty = newTotalQty; existingItem.cost = averageCost; existingItem.retail = newRetail;
+                existingItem.qty = newTotalQty;
+                existingItem.cost = averageCost;
+                existingItem.retail = newRetail;
                 if(!existingItem.compat.toLowerCase().includes(compat.toLowerCase())) existingItem.compat += ", " + compat; 
+                
                 existingItem.history.push({ date: dateStr, type: 'Restock', qty: addedQty, price: addedCost, note: 'Added to existing stock' });
                 alert(`Merged with existing model. New Average Cost: ${formatCur(averageCost)}`);
             } else {
                 inventory.push({ 
                     id: Date.now().toString(), name: nameInput, compat: compat, cost: addedCost, retail: newRetail, qty: addedQty, 
-                    soldQty: 0, revenue: 0, cogs: 0, profit: 0, history: [{ date: dateStr, type: 'Initial Stock', qty: addedQty, price: addedCost }]
+                    soldQty: 0, revenue: 0, cogs: 0, profit: 0,
+                    history: [{ date: dateStr, type: 'Initial Stock', qty: addedQty, price: addedCost, note: 'New Item' }]
                 });
                 alert('New ECU added successfully!');
             }
 
-            await saveData(); updateInventoryUI(); 
-            document.getElementById('ecuForm').reset(); document.getElementById('ecuDate').value = new Date().toISOString().split('T')[0];
+            await saveData(); 
+            updateInventoryUI(); 
+            document.getElementById('ecuForm').reset();
+            document.getElementById('ecuDate').value = new Date().toISOString().split('T')[0];
         });
 
         async function deleteItem(id) {
-            if(!isAdmin) return alert("Login required to delete.");
-            if(confirm('Delete this ECU permanently?')) { inventory = inventory.filter(i => i.id !== id); await saveData(); updateInventoryUI(); }
+            if(confirm('Delete this ECU permanently?')) { 
+                inventory = inventory.filter(i => i.id !== id); 
+                await saveData(); 
+                updateInventoryUI(); 
+            }
         }
 
         function toggleOosList() {
@@ -515,17 +562,17 @@
             let outOfStockItems = [];
 
             if(inventory.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Your inventory is empty.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Your inventory is empty. Add items above.</td></tr>';
                 return;
             }
 
             inventory.forEach(item => {
+                item.soldQty = item.soldQty || 0; item.revenue = item.revenue || 0;
+                item.cogs = item.cogs || 0; item.profit = item.profit || 0; item.history = item.history || [];
+
                 dataList.innerHTML += `<option value="${item.name}">`;
                 if (item.qty <= 0) outOfStockItems.push(item);
                 const itemAssetVal = item.cost * (item.qty > 0 ? item.qty : 0);
-
-                // Only show delete button if Admin
-                const deleteBtnHtml = isAdmin ? `<button class="btn btn-danger btn-sm" onclick="deleteItem('${item.id}')"><i class="fas fa-trash"></i></button>` : `<i class="fas fa-lock" style="color:#ccc;" title="Login to delete"></i>`;
 
                 tbody.innerHTML += `
                     <tr class="inv-row">
@@ -534,7 +581,7 @@
                         <td>${formatCur(item.retail)}</td>
                         <td><span class="badge ${item.qty <= 0 ? 'badge-danger' : ''}">${item.qty}</span></td>
                         <td>${formatCur(itemAssetVal)}</td>
-                        <td>${deleteBtnHtml}</td>
+                        <td><button class="btn btn-danger btn-sm" onclick="deleteItem('${item.id}')"><i class="fas fa-trash"></i></button></td>
                     </tr>
                 `;
             });
@@ -548,32 +595,42 @@
         }
 
         function showHistory(id) {
-            const item = inventory.find(i => i.id === id); if(!item) return;
+            const item = inventory.find(i => i.id === id);
+            if(!item) return;
             document.getElementById('histTitle').innerText = `Movement History: ${item.name}`;
-            const tbody = document.getElementById('historyBody'); tbody.innerHTML = '';
-            [...(item.history||[])].sort((a,b) => new Date(b.date)-new Date(a.date)).forEach(r => {
+            const tbody = document.getElementById('historyBody');
+            tbody.innerHTML = '';
+            const sortedHistory = [...item.history].sort((a, b) => new Date(b.date) - new Date(a.date));
+            sortedHistory.forEach(r => {
                 const color = r.type === 'Sale' ? 'var(--success)' : 'var(--primary)';
                 tbody.innerHTML += `<tr><td>${new Date(r.date).toLocaleDateString()}</td><td style="color:${color}; font-weight:600;">${r.type}</td><td>${r.qty}</td><td>${formatCur(r.price)}</td><td style="font-size:12px;">${r.note || ''}</td></tr>`;
             });
             document.getElementById('historyModal').style.display = 'block';
         }
-        
+        function closeModal() { document.getElementById('historyModal').style.display = 'none'; }
+        window.onclick = function(e) { if (e.target == document.getElementById('historyModal')) closeModal(); }
+
         function downloadInventoryPDF() {
             document.getElementById('docInvRepDate').innerText = new Date().toLocaleDateString();
-            const docBody = document.getElementById('docInventoryBody'); docBody.innerHTML = '';
-            inventory.forEach(item => docBody.innerHTML += `<tr><td style="padding:6px; border:1px solid #ccc;">${item.name}</td><td style="padding:6px; border:1px solid #ccc; text-align:center;">${item.qty}</td><td style="padding:6px; border:1px solid #ccc; text-align:right;">${formatCur(item.cost * (item.qty > 0 ? item.qty : 0))}</td></tr>`);
-            const el = document.getElementById('inventory-document'); el.style.display = 'block';
-            html2pdf().set({ margin: 10, filename: `Inventory_Report.pdf`, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } }).from(el).save().then(() => el.style.display = 'none');
+            const docBody = document.getElementById('docInventoryBody');
+            docBody.innerHTML = '';
+            inventory.forEach(item => {
+                const assetVal = item.cost * (item.qty > 0 ? item.qty : 0);
+                docBody.innerHTML += `<tr><td style="padding:6px; border:1px solid #ccc;">${item.name}</td><td style="padding:6px; border:1px solid #ccc; text-align:center;">${item.qty}</td><td style="padding:6px; border:1px solid #ccc; text-align:right;">${formatCur(assetVal)}</td></tr>`;
+            });
+            const element = document.getElementById('inventory-document');
+            element.style.display = 'block';
+            html2pdf().set({ margin: 10, filename: `Inventory_Report.pdf`, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } }).from(element).save().then(() => element.style.display = 'none');
         }
 
         // ================= INVOICING LOGIC =================
         function populateInvoiceDropdown() {
-            const select = document.getElementById('invItemSelect'); select.innerHTML = '<option value="">-- Choose Item --</option>';
+            const select = document.getElementById('invItemSelect');
+            select.innerHTML = '<option value="">-- Choose Item --</option>';
             inventory.filter(i => i.qty > 0).forEach(item => select.innerHTML += `<option value="${item.id}">${item.name} (Stock: ${item.qty}) - ${formatCur(item.retail)}</option>`);
         }
 
         function addToInvoice() {
-            if(!isAdmin) return;
             const itemId = document.getElementById('invItemSelect').value;
             const qty = parseInt(document.getElementById('invQty').value);
             if(!itemId || qty <= 0) return alert("Select item and quantity.");
@@ -590,7 +647,8 @@
         function removeInvoiceItem(id) { currentInvoice = currentInvoice.filter(i => i.id !== id); renderPendingInvoice(); }
 
         function renderPendingInvoice() {
-            const body = document.getElementById('pendingInvoiceBody'); body.innerHTML = ''; let total = 0;
+            const body = document.getElementById('pendingInvoiceBody');
+            body.innerHTML = ''; let total = 0;
             currentInvoice.forEach(item => {
                 const lineTotal = item.retail * item.qty; total += lineTotal;
                 body.innerHTML += `<tr><td>${item.name}</td><td>${formatCur(item.retail)}</td><td>${item.qty}</td><td>${formatCur(lineTotal)}</td><td><button class="btn btn-danger btn-sm" onclick="removeInvoiceItem('${item.id}')"><i class="fas fa-times"></i></button></td></tr>`;
@@ -599,10 +657,11 @@
         }
 
         async function finalizeInvoice() {
-            if(!isAdmin || currentInvoice.length === 0) return;
+            if(currentInvoice.length === 0) return;
             const invNum = "INV-" + Math.floor(10000 + Math.random() * 90000);
             const customerName = document.getElementById('invCustomer').value || "Walk-in";
-            let docBody = ''; let grandTotal = 0; const saleDate = new Date().toISOString().split('T')[0];
+            let docBody = ''; let grandTotal = 0;
+            const saleDate = new Date().toISOString().split('T')[0];
             let soldItemsNames = [];
 
             currentInvoice.forEach(invItem => {
@@ -625,56 +684,52 @@
             document.getElementById('docCustomer').innerText = customerName; document.getElementById('docInvoiceBody').innerHTML = docBody;
             document.getElementById('docTotal').innerText = formatCur(grandTotal);
             
-            await saveData(); updateInventoryUI();
+            await saveData(); 
+            updateInventoryUI();
+            
             document.body.classList.add('print-invoice'); window.print();
             setTimeout(() => { document.body.classList.remove('print-invoice'); currentInvoice = []; renderPendingInvoice(); populateInvoiceDropdown(); }, 1000);
         }
 
-        // ================= BACKUP & EXPORT =================
-        function downloadBackup() {
-            const dataToBackup = { inventory: inventory, salesLedger: salesLedger };
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dataToBackup));
-            const a = document.createElement('a'); a.setAttribute("href", dataStr); a.setAttribute("download", `ECU_Backup_${new Date().toISOString().split('T')[0]}.json`);
-            document.body.appendChild(a); a.click(); a.remove();
-        }
-
-        function restoreBackup(event) {
-            if(!isAdmin) return;
-            const file = event.target.files[0]; if (!file) return;
-            const reader = new FileReader();
-            reader.onload = async function(e) {
-                try {
-                    const importedData = JSON.parse(e.target.result);
-                    if (importedData.inventory && importedData.salesLedger) {
-                        inventory = importedData.inventory; salesLedger = importedData.salesLedger;
-                        await saveData(); updateInventoryUI(); updateReports();
-                        alert("Database restored and synced to cloud successfully!");
-                    } else alert("Error: Invalid backup format.");
-                } catch (err) { alert("Error reading backup."); }
-                document.getElementById('backupFileInput').value = '';
-            };
-            reader.readAsText(file);
-        }
-
+        // ================= EXCEL EXPORT LOGIC =================
         function triggerCSVDownload(csvContent, filename) {
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const a = document.createElement("a"); a.setAttribute("href", URL.createObjectURL(blob)); a.setAttribute("download", filename);
-            document.body.appendChild(a); a.click(); a.remove();
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
         function exportExcel(type) {
-            let csv = ""; let today = new Date().toISOString().split('T')[0];
+            let csv = "";
+            let today = new Date().toISOString().split('T')[0];
+
             if (type === 'inventory') {
                 csv = "Model Name,Compatibility,Avg Unit Cost,Retail Price,Qty in Stock,Total Asset Value\n";
-                inventory.forEach(i => { csv += `${escapeCSV(i.name)},${escapeCSV(i.compat)},${i.cost},${i.retail},${i.qty},${i.cost * (i.qty > 0 ? i.qty : 0)}\n`; });
-                triggerCSVDownload(csv, `Inventory_${today}.csv`);
-            } else if (type === 'sales_ledger') {
+                inventory.forEach(i => {
+                    const asset = i.cost * (i.qty > 0 ? i.qty : 0);
+                    csv += `${escapeCSV(i.name)},${escapeCSV(i.compat)},${i.cost},${i.retail},${i.qty},${asset}\n`;
+                });
+                triggerCSVDownload(csv, `Inventory_Report_${today}.csv`);
+            } 
+            else if (type === 'sales_ledger') {
                 csv = "Date,Invoice Number,Customer Name,Items Sold,Total Invoice Value\n";
-                salesLedger.forEach(s => { csv += `${s.date},${s.invNum},${escapeCSV(s.customer)},${escapeCSV(s.itemsStr)},${s.total}\n`; });
+                salesLedger.forEach(s => {
+                    csv += `${s.date},${s.invNum},${escapeCSV(s.customer)},${escapeCSV(s.itemsStr)},${s.total}\n`;
+                });
                 triggerCSVDownload(csv, `Sales_Ledger_${today}.csv`);
-            } else if (type === 'sales_item') {
-                csv = "Model Name,Total Units Sold,Gross Revenue,Total COGS,Net Profit\n";
-                inventory.forEach(i => { if(i.soldQty > 0) csv += `${escapeCSV(i.name)},${i.soldQty},${i.revenue},${i.cogs},${i.profit}\n`; });
+            } 
+            else if (type === 'sales_item') {
+                csv = "Model Name,Total Units Sold,Gross Revenue,Total Cost of Goods (COGS),Net Profit\n";
+                inventory.forEach(i => {
+                    if(i.soldQty > 0) {
+                        csv += `${escapeCSV(i.name)},${i.soldQty},${i.revenue},${i.cogs},${i.profit}\n`;
+                    }
+                });
                 triggerCSVDownload(csv, `Sales_Per_Item_${today}.csv`);
             }
         }
@@ -683,13 +738,17 @@
         function updateReports() {
             let assetValue = 0, totalRev = 0, totalCogs = 0, totalProfit = 0, totalUnits = 0;
             let chartLabels = [], chartData = [];
-            const itemSalesBody = document.getElementById('itemSalesBody'); itemSalesBody.innerHTML = '';
+            const itemSalesBody = document.getElementById('itemSalesBody');
+            itemSalesBody.innerHTML = '';
 
             inventory.forEach(i => {
                 assetValue += (i.cost * (i.qty > 0 ? i.qty : 0)); totalUnits += (i.soldQty || 0); totalRev += (i.revenue || 0);
                 totalCogs += (i.cogs || 0); totalProfit += (i.profit || 0);
                 if(i.revenue > 0) { chartLabels.push(i.name); chartData.push(i.revenue); }
-                if((i.soldQty || 0) > 0) itemSalesBody.innerHTML += `<tr><td><strong>${i.name}</strong></td><td>${i.soldQty}</td><td style="color:var(--primary);">${formatCur(i.revenue)}</td><td style="color:var(--danger);">${formatCur(i.cogs)}</td><td style="color:var(--success); font-weight:bold;">${formatCur(i.profit)}</td></tr>`;
+                
+                if((i.soldQty || 0) > 0) {
+                    itemSalesBody.innerHTML += `<tr><td><strong>${i.name}</strong></td><td>${i.soldQty}</td><td style="color:var(--primary);">${formatCur(i.revenue)}</td><td style="color:var(--danger);">${formatCur(i.cogs)}</td><td style="color:var(--success); font-weight:bold;">${formatCur(i.profit)}</td></tr>`;
+                }
             });
             if(itemSalesBody.innerHTML === '') itemSalesBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No items sold yet.</td></tr>';
             
@@ -698,20 +757,23 @@
             document.getElementById('pnlRev').innerText = formatCur(totalRev); document.getElementById('pnlCogs').innerText = "-" + formatCur(totalCogs);
             document.getElementById('pnlNet').innerText = formatCur(totalProfit);
 
-            const ledgerBody = document.getElementById('salesLedgerBody'); ledgerBody.innerHTML = '';
-            [...salesLedger].sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(sale => {
+            const ledgerBody = document.getElementById('salesLedgerBody');
+            ledgerBody.innerHTML = '';
+            const sortedLedger = [...salesLedger].sort((a,b) => new Date(b.date) - new Date(a.date));
+            sortedLedger.forEach(sale => {
                 ledgerBody.innerHTML += `<tr><td>${sale.date}</td><td><strong>${sale.invNum}</strong></td><td>${sale.customer}</td><td style="font-size:12px;">${sale.itemsStr}</td><td style="color:var(--primary); font-weight:bold;">${formatCur(sale.total)}</td></tr>`;
             });
             if(ledgerBody.innerHTML === '') ledgerBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No invoices generated yet.</td></tr>';
 
             const movingTbody = document.getElementById('repMovingBody'); movingTbody.innerHTML = '';
-            [...inventory].sort((a,b) => (b.profit || 0) - (a.profit || 0)).slice(0, 5).forEach(i => { 
-                if((i.soldQty || 0) > 0) movingTbody.innerHTML += `<tr><td><strong>${i.name}</strong></td><td>${i.soldQty}</td><td style="color:var(--success);">${formatCur(i.profit)}</td></tr>`; 
-            });
+            const sorted = [...inventory].sort((a,b) => (b.profit || 0) - (a.profit || 0)).slice(0, 5);
+            sorted.forEach(i => { if((i.soldQty || 0) > 0) movingTbody.innerHTML += `<tr><td><strong>${i.name}</strong></td><td>${i.soldQty}</td><td style="color:var(--success);">${formatCur(i.profit)}</td></tr>`; });
 
             const ctx = document.getElementById('revenuePieChart');
             if(pieChartInstance) pieChartInstance.destroy(); 
-            if(chartLabels.length > 0) pieChartInstance = new Chart(ctx, { type: 'doughnut', data: { labels: chartLabels, datasets: [{ data: chartData, backgroundColor: ['#1e3a8a', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'], borderWidth: 1 }] }, options: { responsive: true, plugins: { legend: { position: 'right' } } } });
+            if(chartLabels.length > 0) {
+                pieChartInstance = new Chart(ctx, { type: 'doughnut', data: { labels: chartLabels, datasets: [{ data: chartData, backgroundColor: ['#1e3a8a', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'], borderWidth: 1 }] }, options: { responsive: true, plugins: { legend: { position: 'right' } } } });
+            }
         }
     </script>
 </body>
