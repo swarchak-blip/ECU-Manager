@@ -64,6 +64,11 @@
         .btn-danger { background-color: var(--danger); }
         .btn-warning { background-color: var(--success); color: white; }
 
+        /* Search Bar */
+        .search-container { margin-bottom: 15px; position: relative; }
+        .search-container input { width: 100%; padding: 12px 15px 12px 40px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; outline: none; }
+        .search-container i { position: absolute; left: 15px; top: 14px; color: var(--text-muted); }
+
         /* Dropdown */
         .dropdown { position: relative; display: inline-block; }
         .dropdown-content { display: none; position: absolute; right: 0; background-color: white; min-width: 220px; box-shadow: 0px 8px 16px rgba(0,0,0,0.1); border-radius: 6px; border: 1px solid var(--border); overflow: hidden; z-index: 20; }
@@ -72,14 +77,17 @@
         .dropdown:hover .dropdown-content { display: block; }
 
         /* Tables */
-        .table-responsive { overflow-x: auto; max-height: 400px; }
+        .table-responsive { overflow-x: auto; max-height: 500px; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
-        th { background-color: var(--bg-color); font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; position: sticky; top: 0; }
+        th { background-color: var(--bg-color); font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; position: sticky; top: 0; z-index: 2; }
         .badge { background: var(--bg-color); padding: 4px 10px; border-radius: 20px; font-weight: 600; font-size: 12px; border: 1px solid var(--border); }
         .badge-danger { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
+        
         .info-icon { display: none; color: var(--primary); cursor: pointer; margin-left: 8px; font-size: 16px; }
+        .edit-icon { color: var(--primary); cursor: pointer; margin-left: 5px; font-size: 12px; transition: 0.2s; opacity: 0.5; }
         tr:hover .info-icon { display: inline-block; }
+        tr:hover .edit-icon { opacity: 1; }
 
         /* Reports */
         .report-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
@@ -138,11 +146,15 @@
                 <div class="card">
                     <div class="card-title"><span><i class="fas fa-plus-circle"></i> Add/Update ECU</span></div>
                     <form id="ecuForm">
-                        <div class="form-group"><label>Date Purchased</label><input type="date" id="ecuDate" required></div>
+                        <div class="form-group"><label>Date</label><input type="date" id="ecuDate" required></div>
                         <div class="form-group">
-                            <label>ECU Model Name</label>
+                            <label>New ECU Model Name</label>
                             <input type="text" id="ecuName" list="ecuList" placeholder="e.g., DSE 7320" required autocomplete="off">
                             <datalist id="ecuList"></datalist>
+                        </div>
+                        <div class="form-group">
+                            <label>Old Part Numbers (Superseded)</label>
+                            <input type="text" id="ecuOldParts" placeholder="Optional: e.g., DSE 7220, 0143-X">
                         </div>
                         <div class="form-group"><label>Compatibility</label><input type="text" id="ecuCompat" required></div>
                         <div class="form-row">
@@ -159,9 +171,16 @@
                         <span><i class="fas fa-list"></i> Current Stock</span>
                         <button class="btn btn-warning btn-sm" style="background:#dc2626;" onclick="downloadInventoryPDF()"><i class="fas fa-file-pdf"></i> PDF</button>
                     </div>
+                    
+                    <!-- Search Bar -->
+                    <div class="search-container">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="invSearch" placeholder="Search by Model Name, Old Part #, or Compatibility..." onkeyup="filterInventory()">
+                    </div>
+
                     <div class="table-responsive">
                         <table>
-                            <thead><tr><th>Model (Hover for info)</th><th>Avg Cost</th><th>Retail</th><th>Qty</th><th>Asset Value</th><th>Action</th></tr></thead>
+                            <thead><tr><th>Model & Compatibility</th><th>Avg Cost</th><th>Retail Price</th><th>Qty</th><th>Asset Value</th><th>Action</th></tr></thead>
                             <tbody id="inventoryBody">
                                 <tr><td colspan="6" style="text-align:center;">Fetching data from cloud...</td></tr>
                             </tbody>
@@ -325,7 +344,7 @@
         const escapeCSV = (str) => `"${String(str).replace(/"/g, '""')}"`;
 
         // ================= FIREBASE SETUP =================
-        // Replace YOUR_API_KEY_HERE with the API key from your Firebase Project Settings
+        // WARNING: Replace YOUR_API_KEY_HERE before publishing!
         const firebaseConfig = {
             apiKey: "AIzaSyCYswjDisG6BByRalql4YwA-qv0TjLNNFY", 
             databaseURL: "https://ecu-manager-a5f4a-default-rtdb.firebaseio.com"
@@ -350,12 +369,10 @@
             const adminBtns = document.querySelectorAll('.admin-only-btn');
             
             if (user) {
-                // User is Logged In
                 authToken = await user.getIdToken();
                 isAdmin = true;
                 authBtn.innerText = "Logout";
                 
-                // Enable Write Buttons
                 adminBtns.forEach(btn => {
                     btn.disabled = false;
                     if(btn.innerHTML.includes('Add Stock')) btn.innerHTML = '<i class="fas fa-save"></i> Save to Cloud';
@@ -364,12 +381,10 @@
                     if(btn.innerHTML.includes('Restore')) btn.innerHTML = '<i class="fas fa-upload"></i> Restore from Backup';
                 });
             } else {
-                // User is Logged Out (Read Only Mode)
                 authToken = null;
                 isAdmin = false;
                 authBtn.innerText = "Login (Admin)";
                 
-                // Disable Write Buttons
                 adminBtns.forEach(btn => {
                     btn.disabled = true;
                     if(btn.innerHTML.includes('Save to Cloud')) btn.innerHTML = '<i class="fas fa-lock"></i> Login to Add Stock';
@@ -378,15 +393,12 @@
                     if(btn.innerHTML.includes('Restore')) btn.innerHTML = '<i class="fas fa-lock"></i> Login to Restore';
                 });
             }
-            updateInventoryUI(); // Refresh UI to hide/show delete buttons
+            updateInventoryUI(); 
         });
 
         function toggleAuthModal() {
-            if (isAdmin) {
-                auth.signOut().then(() => alert("Logged out successfully. App is now Read-Only."));
-            } else {
-                document.getElementById('loginModal').style.display = 'block';
-            }
+            if (isAdmin) { auth.signOut().then(() => alert("Logged out successfully. App is now Read-Only.")); } 
+            else { document.getElementById('loginModal').style.display = 'block'; }
         }
 
         function loginAdmin() {
@@ -404,7 +416,6 @@
         async function loadDataFromFirebase() {
             const status = document.getElementById('cloudStatus');
             try {
-                // Read is Public, so no authToken required here
                 const response = await fetch(FIREBASE_URL);
                 const data = await response.json();
                 
@@ -419,7 +430,6 @@
             } catch (error) {
                 status.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Offline';
                 status.style.color = '#dc2626'; status.style.background = '#fee2e2';
-                // Fallback
                 inventory = JSON.parse(localStorage.getItem('ecuInventory_backup')) || [];
                 salesLedger = JSON.parse(localStorage.getItem('ecuSales_backup')) || [];
                 updateInventoryUI(); updateReports();
@@ -437,7 +447,6 @@
             localStorage.setItem('ecuSales_backup', JSON.stringify(salesLedger)); 
 
             try {
-                // Write requires Auth Token
                 await fetch(`${FIREBASE_URL}?auth=${authToken}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
@@ -468,6 +477,7 @@
 
             const dateStr = document.getElementById('ecuDate').value;
             const nameInput = document.getElementById('ecuName').value.trim();
+            const oldPartsInput = document.getElementById('ecuOldParts').value.trim();
             const compat = document.getElementById('ecuCompat').value.trim();
             const addedCost = parseFloat(document.getElementById('ecuCost').value);
             const newRetail = parseFloat(document.getElementById('ecuRetail').value);
@@ -480,22 +490,32 @@
                 const currentTotalValue = (existingItem.qty > 0 ? existingItem.qty : 0) * existingItem.cost;
                 const newAddedValue = addedQty * addedCost;
                 const newTotalQty = (existingItem.qty > 0 ? existingItem.qty : 0) + addedQty;
-                const averageCost = (currentTotalValue + newAddedValue) / newTotalQty;
-
-                existingItem.qty = newTotalQty; existingItem.cost = averageCost; existingItem.retail = newRetail;
+                
+                existingItem.qty = newTotalQty; 
+                existingItem.cost = (currentTotalValue + newAddedValue) / newTotalQty;
+                existingItem.retail = newRetail;
+                
                 if(!existingItem.compat.toLowerCase().includes(compat.toLowerCase())) existingItem.compat += ", " + compat; 
+                if(oldPartsInput && !(existingItem.oldParts||"").toLowerCase().includes(oldPartsInput.toLowerCase())) {
+                    existingItem.oldParts = existingItem.oldParts ? existingItem.oldParts + ", " + oldPartsInput : oldPartsInput;
+                }
+                
                 existingItem.history.push({ date: dateStr, type: 'Restock', qty: addedQty, price: addedCost, note: 'Added to existing stock' });
-                alert(`Merged with existing model. New Average Cost: ${formatCur(averageCost)}`);
+                alert(`Merged with existing model. New Average Cost: ${formatCur(existingItem.cost)}`);
             } else {
                 inventory.push({ 
-                    id: Date.now().toString(), name: nameInput, compat: compat, cost: addedCost, retail: newRetail, qty: addedQty, 
+                    id: Date.now().toString(), name: nameInput, oldParts: oldPartsInput, compat: compat, cost: addedCost, retail: newRetail, qty: addedQty, 
                     soldQty: 0, revenue: 0, cogs: 0, profit: 0, history: [{ date: dateStr, type: 'Initial Stock', qty: addedQty, price: addedCost }]
                 });
                 alert('New ECU added successfully!');
             }
 
             await saveData(); updateInventoryUI(); 
-            document.getElementById('ecuForm').reset(); document.getElementById('ecuDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('ecuName').value = '';
+            document.getElementById('ecuOldParts').value = '';
+            document.getElementById('ecuCompat').value = '';
+            document.getElementById('ecuCost').value = '';
+            document.getElementById('ecuQty').value = '1';
         });
 
         async function deleteItem(id) {
@@ -503,9 +523,33 @@
             if(confirm('Delete this ECU permanently?')) { inventory = inventory.filter(i => i.id !== id); await saveData(); updateInventoryUI(); }
         }
 
-        function toggleOosList() {
-            const list = document.getElementById('oosList');
-            list.style.display = list.style.display === 'block' ? 'none' : 'block';
+        async function editPrice(id) {
+            if(!isAdmin) return alert("Login required to edit prices.");
+            let item = inventory.find(i => i.id === id);
+            if(!item) return;
+            
+            let newPriceStr = prompt(`Enter new Retail Price for ${item.name}:\n(Current: ${formatCur(item.retail)})`, item.retail);
+            if(newPriceStr === null) return; 
+            
+            let newPrice = parseFloat(newPriceStr);
+            if(isNaN(newPrice) || newPrice < 0) return alert("Invalid price entered.");
+            
+            item.retail = newPrice;
+            item.history = item.history || [];
+            item.history.push({ date: new Date().toISOString().split('T')[0], type: 'Price Update', qty: '-', price: newPrice, note: 'Retail price adjusted manually' });
+            
+            await saveData();
+            updateInventoryUI();
+            populateInvoiceDropdown();
+        }
+
+        function filterInventory() {
+            const query = document.getElementById('invSearch').value.toLowerCase();
+            const rows = document.querySelectorAll('.inv-row');
+            rows.forEach(row => {
+                const textData = row.getAttribute('data-search').toLowerCase();
+                row.style.display = textData.includes(query) ? '' : 'none';
+            });
         }
 
         function updateInventoryUI() {
@@ -515,29 +559,41 @@
             let outOfStockItems = [];
 
             if(inventory.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Your inventory is empty.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Your inventory is empty. Add items above.</td></tr>';
                 return;
             }
 
             inventory.forEach(item => {
+                item.history = item.history || [];
                 dataList.innerHTML += `<option value="${item.name}">`;
                 if (item.qty <= 0) outOfStockItems.push(item);
-                const itemAssetVal = item.cost * (item.qty > 0 ? item.qty : 0);
-
-                // Only show delete button if Admin
+                
                 const deleteBtnHtml = isAdmin ? `<button class="btn btn-danger btn-sm" onclick="deleteItem('${item.id}')"><i class="fas fa-trash"></i></button>` : `<i class="fas fa-lock" style="color:#ccc;" title="Login to delete"></i>`;
+                const editPriceHtml = isAdmin ? `<i class="fas fa-edit edit-icon" onclick="editPrice('${item.id}')" title="Edit Retail Price"></i>` : '';
+                const oldPartsHtml = item.oldParts ? `<br><small style="color:var(--warning); font-weight:600;">Replaces: ${item.oldParts}</small>` : '';
 
-                tbody.innerHTML += `
-                    <tr class="inv-row">
-                        <td><strong>${item.name}</strong> <i class="fas fa-info-circle info-icon" onclick="showHistory('${item.id}')"></i><br><small style="color:#666">${item.compat}</small></td>
-                        <td>${formatCur(item.cost)}</td>
-                        <td>${formatCur(item.retail)}</td>
-                        <td><span class="badge ${item.qty <= 0 ? 'badge-danger' : ''}">${item.qty}</span></td>
-                        <td>${formatCur(itemAssetVal)}</td>
-                        <td>${deleteBtnHtml}</td>
-                    </tr>
+                const tr = document.createElement('tr');
+                tr.className = 'inv-row';
+                // Data attribute for the search bar
+                tr.setAttribute('data-search', `${item.name} ${item.compat} ${item.oldParts || ''}`);
+
+                tr.innerHTML = `
+                    <td>
+                        <strong>${item.name}</strong> <i class="fas fa-info-circle info-icon" onclick="showHistory('${item.id}')"></i>
+                        <br><small style="color:#666">Fits: ${item.compat}</small>
+                        ${oldPartsHtml}
+                    </td>
+                    <td>${formatCur(item.cost)}</td>
+                    <td>${formatCur(item.retail)} ${editPriceHtml}</td>
+                    <td><span class="badge ${item.qty <= 0 ? 'badge-danger' : ''}">${item.qty}</span></td>
+                    <td>${formatCur(item.cost * (item.qty > 0 ? item.qty : 0))}</td>
+                    <td>${deleteBtnHtml}</td>
                 `;
+                tbody.appendChild(tr);
             });
+
+            // Re-apply search filter if user types something, then adds/edits an item
+            filterInventory();
 
             const stockAlert = document.getElementById('stockAlert');
             if (outOfStockItems.length > 0) {
@@ -547,17 +603,24 @@
             } else stockAlert.style.display = 'none';
         }
 
+        function toggleOosList() {
+            const list = document.getElementById('oosList');
+            list.style.display = list.style.display === 'block' ? 'none' : 'block';
+        }
+
         function showHistory(id) {
             const item = inventory.find(i => i.id === id); if(!item) return;
             document.getElementById('histTitle').innerText = `Movement History: ${item.name}`;
             const tbody = document.getElementById('historyBody'); tbody.innerHTML = '';
             [...(item.history||[])].sort((a,b) => new Date(b.date)-new Date(a.date)).forEach(r => {
-                const color = r.type === 'Sale' ? 'var(--success)' : 'var(--primary)';
+                const color = r.type === 'Sale' ? 'var(--success)' : (r.type === 'Price Update' ? 'var(--warning)' : 'var(--primary)');
                 tbody.innerHTML += `<tr><td>${new Date(r.date).toLocaleDateString()}</td><td style="color:${color}; font-weight:600;">${r.type}</td><td>${r.qty}</td><td>${formatCur(r.price)}</td><td style="font-size:12px;">${r.note || ''}</td></tr>`;
             });
             document.getElementById('historyModal').style.display = 'block';
         }
-        
+        function closeModal() { document.getElementById('historyModal').style.display = 'none'; }
+        window.onclick = function(e) { if (e.target == document.getElementById('historyModal')) closeModal(); }
+
         function downloadInventoryPDF() {
             document.getElementById('docInvRepDate').innerText = new Date().toLocaleDateString();
             const docBody = document.getElementById('docInventoryBody'); docBody.innerHTML = '';
@@ -639,7 +702,7 @@
         }
 
         function restoreBackup(event) {
-            if(!isAdmin) return;
+            if(!isAdmin) return alert("Login required.");
             const file = event.target.files[0]; if (!file) return;
             const reader = new FileReader();
             reader.onload = async function(e) {
@@ -665,8 +728,8 @@
         function exportExcel(type) {
             let csv = ""; let today = new Date().toISOString().split('T')[0];
             if (type === 'inventory') {
-                csv = "Model Name,Compatibility,Avg Unit Cost,Retail Price,Qty in Stock,Total Asset Value\n";
-                inventory.forEach(i => { csv += `${escapeCSV(i.name)},${escapeCSV(i.compat)},${i.cost},${i.retail},${i.qty},${i.cost * (i.qty > 0 ? i.qty : 0)}\n`; });
+                csv = "Model Name,Old Parts,Compatibility,Avg Unit Cost,Retail Price,Qty in Stock,Total Asset Value\n";
+                inventory.forEach(i => { csv += `${escapeCSV(i.name)},${escapeCSV(i.oldParts||'')},${escapeCSV(i.compat)},${i.cost},${i.retail},${i.qty},${i.cost * (i.qty > 0 ? i.qty : 0)}\n`; });
                 triggerCSVDownload(csv, `Inventory_${today}.csv`);
             } else if (type === 'sales_ledger') {
                 csv = "Date,Invoice Number,Customer Name,Items Sold,Total Invoice Value\n";
