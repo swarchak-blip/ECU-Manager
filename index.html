@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generator ECU Management System Developed by Eng. Saad Mohammed</title>
+    <title>Generator ECU Management System</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
@@ -149,12 +149,12 @@
                         <div class="form-group"><label>Date</label><input type="date" id="ecuDate" required></div>
                         <div class="form-group">
                             <label>New ECU Model Name</label>
-                            <input type="text" id="ecuName" list="ecuList" placeholder="e.g., ECU ********" required autocomplete="off">
+                            <input type="text" id="ecuName" list="ecuList" placeholder="e.g., DSE 7320" required autocomplete="off">
                             <datalist id="ecuList"></datalist>
                         </div>
                         <div class="form-group">
                             <label>Old Part Numbers (Superseded)</label>
-                            <input type="text" id="ecuOldParts" placeholder="Optional: e.g., ECU ********, 0143-X">
+                            <input type="text" id="ecuOldParts" placeholder="Optional: e.g., ECU 11111111, 0143-X">
                         </div>
                         <div class="form-group"><label>Compatibility</label><input type="text" id="ecuCompat" required></div>
                         <div class="form-row">
@@ -316,7 +316,7 @@
         <!-- Hidden Print Templates -->
         <div id="invoice-document" class="print-doc">
             <div class="doc-header">
-                <div><h1>ECU MANAGER PRO</h1><p>SWARCHAK Co. 60 Meter Street, Erbil, Iraq </p></div>
+                <div><h1>ECU MANAGER PRO</h1><p>123 Generator Avenue, Power City, TX</p></div>
                 <div style="text-align: right;"><h2 style="color:#ccc; margin-bottom: 5px;">INVOICE</h2><strong>Invoice #:</strong> <span id="docInvNum"></span><br><strong>Date:</strong> <span id="docDate"></span></div>
             </div>
             <div style="margin-bottom: 30px;"><h3 style="font-size: 14px; color: #666; border-bottom: 1px solid #ccc; padding-bottom:5px; margin-bottom:5px;">Bill To:</h3><strong><span id="docCustomer"></span></strong></div>
