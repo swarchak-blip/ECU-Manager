@@ -157,8 +157,9 @@
                             <input type="text" id="ecuOldParts" placeholder="Optional: e.g., DSE 7220, 0143-X">
                         </div>
                         <div class="form-group"><label>Compatibility</label><input type="text" id="ecuCompat" required></div>
-                        <div class="form-row">
+                        <div class="form-row" style="grid-template-columns: 1fr 1fr 1fr;">
                             <div class="form-group"><label>Unit Cost ($)</label><input type="number" id="ecuCost" step="0.01" min="0" required></div>
+                            <div class="form-group"><label>Markup (%)</label><input type="number" id="ecuMarkup" step="0.1" placeholder="e.g. 30"></div>
                             <div class="form-group"><label>Retail Price ($)</label><input type="number" id="ecuRetail" step="0.01" min="0" required></div>
                         </div>
                         <div class="form-group"><label>Quantity to Add</label><input type="number" id="ecuQty" min="1" value="1" required></div>
@@ -198,8 +199,15 @@
                     <div class="form-group"><label>Customer Name</label><input type="text" id="invCustomer"></div>
                     <div class="form-group"><label>Select ECU Model</label><select id="invItemSelect"><option value="">-- Loading Items --</option></select></div>
                     <div class="form-group"><label>Quantity</label><input type="number" id="invQty" min="1" value="1"></div>
-                    <button class="btn admin-only-btn" disabled onclick="addToInvoice()"><i class="fas fa-lock"></i> Login to Build Invoice</button>
+                    <button class="btn admin-only-btn" disabled onclick="addToInvoice()"><i class="fas fa-lock"></i> Add Item</button>
+                    
                     <hr style="margin: 25px 0; border-top: 1px solid var(--border);">
+                    <h4 style="font-size: 14px; margin-bottom: 10px; color: var(--primary);">Optional Services</h4>
+                    <div class="form-row">
+                        <div class="form-group"><label>Service Name</label><input type="text" id="invFeeName" placeholder="e.g., Programming"></div>
+                        <div class="form-group"><label>Fee Amount ($)</label><input type="number" id="invFeeAmount" min="0" step="0.01" value="0"></div>
+                    </div>
+                    
                     <button class="btn btn-success admin-only-btn" disabled onclick="finalizeInvoice()"><i class="fas fa-lock"></i> Generate & Save</button>
                 </div>
 
@@ -363,6 +371,20 @@
 
         document.getElementById('ecuDate').value = new Date().toISOString().split('T')[0];
 
+        // Auto-calculate markup
+        document.getElementById('ecuCost').addEventListener('input', calculateRetail);
+        document.getElementById('ecuMarkup').addEventListener('input', calculateRetail);
+        function calculateRetail() {
+            let cost = parseFloat(document.getElementById('ecuCost').value) || 0;
+            let markup = parseFloat(document.getElementById('ecuMarkup').value) || 0;
+            if (cost >= 0 && markup >= 0) {
+                document.getElementById('ecuRetail').value = (cost + (cost * (markup / 100))).toFixed(2);
+            }
+        }
+
+        // Live draft update for service fee
+        document.getElementById('invFeeAmount').addEventListener('input', renderPendingInvoice);
+
         // ================= AUTHENTICATION LOGIC =================
         auth.onAuthStateChanged(async (user) => {
             const authBtn = document.getElementById('authBtn');
@@ -515,6 +537,8 @@
             document.getElementById('ecuOldParts').value = '';
             document.getElementById('ecuCompat').value = '';
             document.getElementById('ecuCost').value = '';
+            document.getElementById('ecuMarkup').value = '';
+            document.getElementById('ecuRetail').value = '';
             document.getElementById('ecuQty').value = '1';
         });
 
@@ -538,9 +562,25 @@
             item.history = item.history || [];
             item.history.push({ date: new Date().toISOString().split('T')[0], type: 'Price Update', qty: '-', price: newPrice, note: 'Retail price adjusted manually' });
             
-            await saveData();
-            updateInventoryUI();
-            populateInvoiceDropdown();
+            await saveData(); updateInventoryUI(); populateInvoiceDropdown();
+        }
+
+        async function editCost(id) {
+            if(!isAdmin) return alert("Login required to edit costs.");
+            let item = inventory.find(i => i.id === id);
+            if(!item) return;
+            
+            let newCostStr = prompt(`Enter new Average Unit Cost for ${item.name}:\n(Current: ${formatCur(item.cost)})`, item.cost);
+            if(newCostStr === null) return; 
+            
+            let newCost = parseFloat(newCostStr);
+            if(isNaN(newCost) || newCost < 0) return alert("Invalid cost entered.");
+            
+            item.cost = newCost;
+            item.history = item.history || [];
+            item.history.push({ date: new Date().toISOString().split('T')[0], type: 'Cost Update', qty: '-', price: newCost, note: 'Unit Cost adjusted manually' });
+            
+            await saveData(); updateInventoryUI(); updateReports();
         }
 
         function filterInventory() {
@@ -558,23 +598,25 @@
             tbody.innerHTML = ''; dataList.innerHTML = '';
             let outOfStockItems = [];
 
-            if(inventory.length === 0) {
+            if(inventory.length === 0 || (inventory.length === 1 && inventory[0].id === 'SERVICES_FEE_TRACKER')) {
                 tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Your inventory is empty. Add items above.</td></tr>';
                 return;
             }
 
             inventory.forEach(item => {
+                if (item.id === 'SERVICES_FEE_TRACKER') return; // Hide background service tracker from main inventory
+
                 item.history = item.history || [];
                 dataList.innerHTML += `<option value="${item.name}">`;
                 if (item.qty <= 0) outOfStockItems.push(item);
                 
                 const deleteBtnHtml = isAdmin ? `<button class="btn btn-danger btn-sm" onclick="deleteItem('${item.id}')"><i class="fas fa-trash"></i></button>` : `<i class="fas fa-lock" style="color:#ccc;" title="Login to delete"></i>`;
                 const editPriceHtml = isAdmin ? `<i class="fas fa-edit edit-icon" onclick="editPrice('${item.id}')" title="Edit Retail Price"></i>` : '';
+                const editCostHtml = isAdmin ? `<i class="fas fa-edit edit-icon" onclick="editCost('${item.id}')" title="Edit Cost Price"></i>` : '';
                 const oldPartsHtml = item.oldParts ? `<br><small style="color:var(--warning); font-weight:600;">Replaces: ${item.oldParts}</small>` : '';
 
                 const tr = document.createElement('tr');
                 tr.className = 'inv-row';
-                // Data attribute for the search bar
                 tr.setAttribute('data-search', `${item.name} ${item.compat} ${item.oldParts || ''}`);
 
                 tr.innerHTML = `
@@ -583,7 +625,7 @@
                         <br><small style="color:#666">Fits: ${item.compat}</small>
                         ${oldPartsHtml}
                     </td>
-                    <td>${formatCur(item.cost)}</td>
+                    <td>${formatCur(item.cost)} ${editCostHtml}</td>
                     <td>${formatCur(item.retail)} ${editPriceHtml}</td>
                     <td><span class="badge ${item.qty <= 0 ? 'badge-danger' : ''}">${item.qty}</span></td>
                     <td>${formatCur(item.cost * (item.qty > 0 ? item.qty : 0))}</td>
@@ -592,7 +634,6 @@
                 tbody.appendChild(tr);
             });
 
-            // Re-apply search filter if user types something, then adds/edits an item
             filterInventory();
 
             const stockAlert = document.getElementById('stockAlert');
@@ -613,7 +654,9 @@
             document.getElementById('histTitle').innerText = `Movement History: ${item.name}`;
             const tbody = document.getElementById('historyBody'); tbody.innerHTML = '';
             [...(item.history||[])].sort((a,b) => new Date(b.date)-new Date(a.date)).forEach(r => {
-                const color = r.type === 'Sale' ? 'var(--success)' : (r.type === 'Price Update' ? 'var(--warning)' : 'var(--primary)');
+                let color = 'var(--primary)';
+                if(r.type === 'Sale') color = 'var(--success)';
+                if(r.type === 'Price Update' || r.type === 'Cost Update') color = 'var(--warning)';
                 tbody.innerHTML += `<tr><td>${new Date(r.date).toLocaleDateString()}</td><td style="color:${color}; font-weight:600;">${r.type}</td><td>${r.qty}</td><td>${formatCur(r.price)}</td><td style="font-size:12px;">${r.note || ''}</td></tr>`;
             });
             document.getElementById('historyModal').style.display = 'block';
@@ -624,7 +667,10 @@
         function downloadInventoryPDF() {
             document.getElementById('docInvRepDate').innerText = new Date().toLocaleDateString();
             const docBody = document.getElementById('docInventoryBody'); docBody.innerHTML = '';
-            inventory.forEach(item => docBody.innerHTML += `<tr><td style="padding:6px; border:1px solid #ccc;">${item.name}</td><td style="padding:6px; border:1px solid #ccc; text-align:center;">${item.qty}</td><td style="padding:6px; border:1px solid #ccc; text-align:right;">${formatCur(item.cost * (item.qty > 0 ? item.qty : 0))}</td></tr>`);
+            inventory.forEach(item => {
+                if(item.id === 'SERVICES_FEE_TRACKER') return;
+                docBody.innerHTML += `<tr><td style="padding:6px; border:1px solid #ccc;">${item.name}</td><td style="padding:6px; border:1px solid #ccc; text-align:center;">${item.qty}</td><td style="padding:6px; border:1px solid #ccc; text-align:right;">${formatCur(item.cost * (item.qty > 0 ? item.qty : 0))}</td></tr>`;
+            });
             const el = document.getElementById('inventory-document'); el.style.display = 'block';
             html2pdf().set({ margin: 10, filename: `Inventory_Report.pdf`, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } }).from(el).save().then(() => el.style.display = 'none');
         }
@@ -632,7 +678,7 @@
         // ================= INVOICING LOGIC =================
         function populateInvoiceDropdown() {
             const select = document.getElementById('invItemSelect'); select.innerHTML = '<option value="">-- Choose Item --</option>';
-            inventory.filter(i => i.qty > 0).forEach(item => select.innerHTML += `<option value="${item.id}">${item.name} (Stock: ${item.qty}) - ${formatCur(item.retail)}</option>`);
+            inventory.filter(i => i.qty > 0 && i.id !== 'SERVICES_FEE_TRACKER').forEach(item => select.innerHTML += `<option value="${item.id}">${item.name} (Stock: ${item.qty}) - ${formatCur(item.retail)}</option>`);
         }
 
         function addToInvoice() {
@@ -654,20 +700,34 @@
 
         function renderPendingInvoice() {
             const body = document.getElementById('pendingInvoiceBody'); body.innerHTML = ''; let total = 0;
+            
+            // Render physical items
             currentInvoice.forEach(item => {
                 const lineTotal = item.retail * item.qty; total += lineTotal;
                 body.innerHTML += `<tr><td>${item.name}</td><td>${formatCur(item.retail)}</td><td>${item.qty}</td><td>${formatCur(lineTotal)}</td><td><button class="btn btn-danger btn-sm" onclick="removeInvoiceItem('${item.id}')"><i class="fas fa-times"></i></button></td></tr>`;
             });
+            
+            // Render optional service fee if added
+            let feeAmount = parseFloat(document.getElementById('invFeeAmount').value) || 0;
+            if (feeAmount > 0) {
+                let feeName = document.getElementById('invFeeName').value.trim() || "Service Fee";
+                body.innerHTML += `<tr><td><em>${feeName}</em></td><td>${formatCur(feeAmount)}</td><td>1</td><td>${formatCur(feeAmount)}</td><td>-</td></tr>`;
+                total += feeAmount;
+            }
+
             document.getElementById('pendingTotal').innerText = formatCur(total);
         }
 
         async function finalizeInvoice() {
-            if(!isAdmin || currentInvoice.length === 0) return;
+            let feeAmount = parseFloat(document.getElementById('invFeeAmount').value) || 0;
+            if(!isAdmin || (currentInvoice.length === 0 && feeAmount <= 0)) return alert("Add items or services to generate invoice.");
+            
             const invNum = "INV-" + Math.floor(10000 + Math.random() * 90000);
             const customerName = document.getElementById('invCustomer').value || "Walk-in";
             let docBody = ''; let grandTotal = 0; const saleDate = new Date().toISOString().split('T')[0];
             let soldItemsNames = [];
 
+            // Process physical items
             currentInvoice.forEach(invItem => {
                 let dbItem = inventory.find(i => i.id === invItem.id);
                 if(dbItem) {
@@ -682,6 +742,25 @@
                 docBody += `<tr><td style="padding:10px; border:1px solid #000;"><strong>${invItem.name}</strong></td><td style="padding:10px; border:1px solid #000; text-align:right;">${formatCur(invItem.retail)}</td><td style="padding:10px; border:1px solid #000; text-align:center;">${invItem.qty}</td><td style="padding:10px; border:1px solid #000; text-align:right;">${formatCur(lineTotal)}</td></tr>`;
             });
 
+            // Process Service Fee
+            if (feeAmount > 0) {
+                let serviceName = document.getElementById('invFeeName').value.trim() || "Service / Inspection";
+                
+                docBody += `<tr><td style="padding:10px; border:1px solid #000;"><strong>${serviceName}</strong></td><td style="padding:10px; border:1px solid #000; text-align:right;">${formatCur(feeAmount)}</td><td style="padding:10px; border:1px solid #000; text-align:center;">1</td><td style="padding:10px; border:1px solid #000; text-align:right;">${formatCur(feeAmount)}</td></tr>`;
+                grandTotal += feeAmount;
+                soldItemsNames.push(`1x ${serviceName}`);
+                
+                let serviceTracker = inventory.find(i => i.id === 'SERVICES_FEE_TRACKER');
+                if (!serviceTracker) {
+                    serviceTracker = { id: 'SERVICES_FEE_TRACKER', name: 'Labor & Services (All)', compat: 'N/A', cost: 0, retail: 0, qty: '-', soldQty: 0, revenue: 0, cogs: 0, profit: 0, history: [] };
+                    inventory.push(serviceTracker);
+                }
+                serviceTracker.soldQty += 1;
+                serviceTracker.revenue += feeAmount;
+                serviceTracker.profit += feeAmount; // 100% profit for services
+                serviceTracker.history.push({ date: saleDate, type: 'Sale', qty: 1, price: feeAmount, note: `Fee on ${invNum}` });
+            }
+
             salesLedger.push({ date: saleDate, invNum: invNum, customer: customerName, itemsStr: soldItemsNames.join(' | '), total: grandTotal });
 
             document.getElementById('docInvNum').innerText = invNum; document.getElementById('docDate').innerText = new Date().toLocaleDateString();
@@ -690,7 +769,14 @@
             
             await saveData(); updateInventoryUI();
             document.body.classList.add('print-invoice'); window.print();
-            setTimeout(() => { document.body.classList.remove('print-invoice'); currentInvoice = []; renderPendingInvoice(); populateInvoiceDropdown(); }, 1000);
+            
+            setTimeout(() => { 
+                document.body.classList.remove('print-invoice'); 
+                currentInvoice = []; 
+                document.getElementById('invFeeName').value = '';
+                document.getElementById('invFeeAmount').value = '0';
+                renderPendingInvoice(); populateInvoiceDropdown(); 
+            }, 1000);
         }
 
         // ================= BACKUP & EXPORT =================
@@ -729,7 +815,10 @@
             let csv = ""; let today = new Date().toISOString().split('T')[0];
             if (type === 'inventory') {
                 csv = "Model Name,Old Parts,Compatibility,Avg Unit Cost,Retail Price,Qty in Stock,Total Asset Value\n";
-                inventory.forEach(i => { csv += `${escapeCSV(i.name)},${escapeCSV(i.oldParts||'')},${escapeCSV(i.compat)},${i.cost},${i.retail},${i.qty},${i.cost * (i.qty > 0 ? i.qty : 0)}\n`; });
+                inventory.forEach(i => { 
+                    if(i.id === 'SERVICES_FEE_TRACKER') return;
+                    csv += `${escapeCSV(i.name)},${escapeCSV(i.oldParts||'')},${escapeCSV(i.compat)},${i.cost},${i.retail},${i.qty},${i.cost * (i.qty > 0 ? i.qty : 0)}\n`; 
+                });
                 triggerCSVDownload(csv, `Inventory_${today}.csv`);
             } else if (type === 'sales_ledger') {
                 csv = "Date,Invoice Number,Customer Name,Items Sold,Total Invoice Value\n";
@@ -749,8 +838,15 @@
             const itemSalesBody = document.getElementById('itemSalesBody'); itemSalesBody.innerHTML = '';
 
             inventory.forEach(i => {
-                assetValue += (i.cost * (i.qty > 0 ? i.qty : 0)); totalUnits += (i.soldQty || 0); totalRev += (i.revenue || 0);
-                totalCogs += (i.cogs || 0); totalProfit += (i.profit || 0);
+                if(i.id !== 'SERVICES_FEE_TRACKER') {
+                    assetValue += (i.cost * (i.qty > 0 ? i.qty : 0)); 
+                    totalUnits += (i.soldQty || 0); 
+                }
+                
+                totalRev += (i.revenue || 0);
+                totalCogs += (i.cogs || 0); 
+                totalProfit += (i.profit || 0);
+                
                 if(i.revenue > 0) { chartLabels.push(i.name); chartData.push(i.revenue); }
                 if((i.soldQty || 0) > 0) itemSalesBody.innerHTML += `<tr><td><strong>${i.name}</strong></td><td>${i.soldQty}</td><td style="color:var(--primary);">${formatCur(i.revenue)}</td><td style="color:var(--danger);">${formatCur(i.cogs)}</td><td style="color:var(--success); font-weight:bold;">${formatCur(i.profit)}</td></tr>`;
             });
