@@ -435,25 +435,48 @@
         }
 
         // ================= CLOUD SYNC LOGIC =================
-        async function loadDataFromFirebase() {
+                async function loadDataFromFirebase() {
             const status = document.getElementById('cloudStatus');
             try {
+                // 1. Get Cloud Data
                 const response = await fetch(FIREBASE_URL);
                 const data = await response.json();
+                let cloudInventory = data ? (data.inventory || []) : [];
+                let cloudSales = data ? (data.salesLedger || []) : [];
                 
-                if (data) {
-                    inventory = data.inventory || [];
-                    salesLedger = data.salesLedger || [];
-                }
+                // 2. Get Local Backup Data
+                let localInv1 = JSON.parse(localStorage.getItem('ecuInventory')) || [];
+                let localInv2 = JSON.parse(localStorage.getItem('ecuInventory_backup')) || [];
+                let localSales1 = JSON.parse(localStorage.getItem('ecuSalesLedger')) || [];
+                let localSales2 = JSON.parse(localStorage.getItem('ecuSales_backup')) || [];
+                
+                // 3. Compare and use whichever has the MOST data (Rescues your 20 ECUs)
+                let bestInventory = cloudInventory;
+                if (localInv1.length > bestInventory.length) bestInventory = localInv1;
+                if (localInv2.length > bestInventory.length) bestInventory = localInv2;
+                
+                let bestSales = cloudSales;
+                if (localSales1.length > bestSales.length) bestSales = localSales1;
+                if (localSales2.length > bestSales.length) bestSales = localSales2;
+
+                inventory = bestInventory;
+                salesLedger = bestSales;
+
                 status.innerHTML = '<i class="fas fa-check-circle"></i> Cloud Synced';
                 status.style.color = '#16a34a'; status.style.background = '#dcfce7';
 
                 updateInventoryUI(); updateReports(); populateInvoiceDropdown();
+                
+                // Alert you if it found the missing data
+                if (bestInventory.length > cloudInventory.length) {
+                    alert("DATA RESCUED: Found your missing ECUs in local memory! Please login as Admin and do a manual 'Backup' right now, then add 1 dummy ECU to force the system to upload everything to Firebase.");
+                }
+
             } catch (error) {
                 status.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Offline';
                 status.style.color = '#dc2626'; status.style.background = '#fee2e2';
-                inventory = JSON.parse(localStorage.getItem('ecuInventory_backup')) || [];
-                salesLedger = JSON.parse(localStorage.getItem('ecuSales_backup')) || [];
+                inventory = JSON.parse(localStorage.getItem('ecuInventory_backup')) || JSON.parse(localStorage.getItem('ecuInventory')) || [];
+                salesLedger = JSON.parse(localStorage.getItem('ecuSales_backup')) || JSON.parse(localStorage.getItem('ecuSalesLedger')) || [];
                 updateInventoryUI(); updateReports();
             }
         }
