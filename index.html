@@ -7,10 +7,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
-    <!-- Firebase Auth & Core SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
@@ -26,7 +24,6 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
         body { background-color: var(--bg-color); color: var(--text-main); }
 
-        /* Navigation */
         .navbar { background: var(--card-bg); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         .logo { display: flex; align-items: center; gap: 10px; font-size: 20px; font-weight: 700; color: var(--primary); }
         .nav-links { display: flex; gap: 15px; align-items: center; }
@@ -38,7 +35,6 @@
         #authBtn { border: 1px solid var(--primary); color: var(--primary); padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; background: transparent; transition: 0.2s; }
         #authBtn:hover { background: var(--primary); color: white; }
 
-        /* Layout & Alerts */
         .container { max-width: 1300px; margin: 20px auto; padding: 0 20px; }
         .view-section { display: none; }
         .view-section.active { display: block; animation: fadeIn 0.3s; }
@@ -48,7 +44,6 @@
         .alert-header { display: flex; justify-content: space-between; align-items: center; }
         #oosList { margin-top: 15px; padding-left: 30px; display: none; border-top: 1px solid #fecaca; padding-top: 15px; }
 
-        /* Forms & Cards */
         .grid-layout { display: grid; grid-template-columns: 350px 1fr; gap: 20px; }
         .card { background: var(--card-bg); border-radius: 8px; padding: 25px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 20px; }
         .card-title { font-size: 16px; font-weight: 600; margin-bottom: 20px; color: var(--text-main); border-bottom: 2px solid var(--bg-color); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center;}
@@ -57,39 +52,36 @@
         .form-group input, .form-group select { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; outline: none; }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
 
-        .btn { width: 100%; padding: 12px; background-color: var(--primary); color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; display: inline-flex; justify-content: center; align-items: center; gap: 8px; }
+        .btn { width: 100%; padding: 12px; background-color: var(--primary); color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; display: inline-flex; justify-content: center; align-items: center; gap: 8px; transition: 0.2s;}
         .btn:disabled { background-color: #cbd5e1 !important; cursor: not-allowed; }
-        .btn-sm { width: auto; padding: 8px 12px; font-size: 13px; }
+        .btn-sm { width: auto; padding: 6px 10px; font-size: 12px; }
         .btn-success { background-color: var(--success); }
         .btn-danger { background-color: var(--danger); }
         .btn-warning { background-color: var(--success); color: white; }
 
-        /* Search Bar */
         .search-container { margin-bottom: 15px; position: relative; }
         .search-container input { width: 100%; padding: 12px 15px 12px 40px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; outline: none; }
         .search-container i { position: absolute; left: 15px; top: 14px; color: var(--text-muted); }
 
-        /* Dropdown */
         .dropdown { position: relative; display: inline-block; }
         .dropdown-content { display: none; position: absolute; right: 0; background-color: white; min-width: 220px; box-shadow: 0px 8px 16px rgba(0,0,0,0.1); border-radius: 6px; border: 1px solid var(--border); overflow: hidden; z-index: 20; }
         .dropdown-content a { color: var(--text-main); padding: 12px 16px; text-decoration: none; display: block; font-size: 13px; font-weight: 500; border-bottom: 1px solid var(--bg-color); cursor: pointer;}
         .dropdown-content a:hover { background-color: var(--bg-color); color: var(--primary); }
         .dropdown:hover .dropdown-content { display: block; }
 
-        /* Tables */
         .table-responsive { overflow-x: auto; max-height: 500px; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border); font-size: 13px; }
         th { background-color: var(--bg-color); font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; position: sticky; top: 0; z-index: 2; }
         .badge { background: var(--bg-color); padding: 4px 10px; border-radius: 20px; font-weight: 600; font-size: 12px; border: 1px solid var(--border); }
         .badge-danger { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
+        .badge-success { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
         
         .info-icon { display: none; color: var(--primary); cursor: pointer; margin-left: 8px; font-size: 16px; }
         .edit-icon { color: var(--primary); cursor: pointer; margin-left: 5px; font-size: 12px; transition: 0.2s; opacity: 0.5; }
         tr:hover .info-icon { display: inline-block; }
         tr:hover .edit-icon { opacity: 1; }
 
-        /* Reports */
         .report-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
         .stat-card { background: var(--card-bg); padding: 20px; border-radius: 8px; border: 1px solid var(--border); }
         .stat-title { font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 600; }
@@ -99,15 +91,17 @@
         .pnl-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px dashed var(--border); font-size: 15px; }
         .pnl-row.total { font-weight: 700; font-size: 18px; border-bottom: none; border-top: 2px solid var(--text-main); margin-top: 10px; padding-top: 15px; }
 
-        /* Modals */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
         .modal-content { background-color: #fff; margin: 10% auto; padding: 25px; border-radius: 8px; width: 600px; max-width: 90%; position: relative; }
         .close-btn { position: absolute; right: 20px; top: 20px; font-size: 24px; cursor: pointer; color: var(--text-muted); }
 
-        /* Print Documents */
         .print-doc { display: none; background: white; padding: 40px; margin-top: 20px; border-radius: 8px; color: #333; }
         .doc-header { display: flex; justify-content: space-between; margin-bottom: 40px; border-bottom: 3px solid var(--primary); padding-bottom: 20px; }
-        .doc-table th { background: var(--primary) !important; color: white !important; }
+        .doc-table th { background: var(--primary) !important; color: white !important; padding: 10px; text-align: left; }
+        .doc-table td { padding: 10px; border: 1px solid #ccc; }
+        .doc-signatures { display: flex; justify-content: space-between; margin-top: 60px; padding-top: 20px; }
+        .doc-signatures div { width: 45%; border-top: 1px solid #000; padding-top: 5px; text-align: center; font-weight: 600; }
+        
         @media print {
             @page { margin: 10mm; size: A4; }
             body { background: white; padding: 0; }
@@ -120,7 +114,7 @@
 
     <!-- Navigation -->
     <nav class="navbar">
-        <div class="logo"><i class="fas fa-microchip"></i> ECU Manager Pro developed by Eng. Saad Mohammed</div>
+        <div class="logo"><i class="fas fa-microchip"></i> ECU Manager Pro</div>
         <div class="nav-links">
             <button class="nav-btn active" onclick="switchTab('inventory')"><i class="fas fa-boxes"></i> Inventory</button>
             <button class="nav-btn" onclick="switchTab('invoicing')"><i class="fas fa-file-invoice-dollar"></i> Sales & Invoicing</button>
@@ -152,10 +146,7 @@
                             <input type="text" id="ecuName" list="ecuList" placeholder="e.g., DSE 7320" required autocomplete="off">
                             <datalist id="ecuList"></datalist>
                         </div>
-                        <div class="form-group">
-                            <label>Old Part Numbers (Superseded)</label>
-                            <input type="text" id="ecuOldParts" placeholder="Optional: e.g., DSE 7220, 0143-X">
-                        </div>
+                        <div class="form-group"><label>Old Part Numbers (Superseded)</label><input type="text" id="ecuOldParts" placeholder="Optional: e.g., DSE 7220"></div>
                         <div class="form-group"><label>Compatibility</label><input type="text" id="ecuCompat" required></div>
                         <div class="form-row" style="grid-template-columns: 1fr 1fr 1fr;">
                             <div class="form-group"><label>Unit Cost ($)</label><input type="number" id="ecuCost" step="0.01" min="0" required></div>
@@ -172,19 +163,14 @@
                         <span><i class="fas fa-list"></i> Current Stock</span>
                         <button class="btn btn-warning btn-sm" style="background:#dc2626;" onclick="downloadInventoryPDF()"><i class="fas fa-file-pdf"></i> PDF</button>
                     </div>
-                    
-                    <!-- Search Bar -->
                     <div class="search-container">
                         <i class="fas fa-search"></i>
                         <input type="text" id="invSearch" placeholder="Search by Model Name, Old Part #, or Compatibility..." onkeyup="filterInventory()">
                     </div>
-
                     <div class="table-responsive">
                         <table>
                             <thead><tr><th>Model & Compatibility</th><th>Avg Cost</th><th>Retail Price</th><th>Qty</th><th>Asset Value</th><th>Action</th></tr></thead>
-                            <tbody id="inventoryBody">
-                                <tr><td colspan="6" style="text-align:center;">Fetching data from cloud...</td></tr>
-                            </tbody>
+                            <tbody id="inventoryBody"><tr><td colspan="6" style="text-align:center;">Fetching data from cloud...</td></tr></tbody>
                         </table>
                     </div>
                 </div>
@@ -196,19 +182,40 @@
             <div class="grid-layout">
                 <div class="card">
                     <div class="card-title"><span><i class="fas fa-cart-plus"></i> Build Invoice</span></div>
-                    <div class="form-group"><label>Customer Name</label><input type="text" id="invCustomer"></div>
+                    
+                    <div class="form-row">
+                        <div class="form-group"><label>Customer Name</label><input type="text" id="invCustomer" placeholder="Name"></div>
+                        <div class="form-group"><label>Phone Number</label><input type="text" id="invPhone" placeholder="Optional"></div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Payment Status</label>
+                            <select id="invPayType" onchange="document.getElementById('dueDateDiv').style.display = this.value === 'Debit' ? 'block' : 'none';">
+                                <option value="Cash">Cash (Paid in Full)</option>
+                                <option value="Debit">Debit (Unpaid Balance)</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="dueDateDiv" style="display: none;">
+                            <label>Due Date</label><input type="date" id="invDueDate">
+                        </div>
+                    </div>
+
+                    <hr style="margin: 15px 0; border-top: 1px solid var(--border);">
+
                     <div class="form-group"><label>Select ECU Model</label><select id="invItemSelect"><option value="">-- Loading Items --</option></select></div>
                     <div class="form-group"><label>Quantity</label><input type="number" id="invQty" min="1" value="1"></div>
-                    <button class="btn admin-only-btn" disabled onclick="addToInvoice()"><i class="fas fa-lock"></i> Add Item</button>
+                    <button class="btn admin-only-btn" disabled onclick="addToInvoice()"><i class="fas fa-plus"></i> Add Item</button>
                     
                     <hr style="margin: 25px 0; border-top: 1px solid var(--border);">
-                    <h4 style="font-size: 14px; margin-bottom: 10px; color: var(--primary);">Optional Services</h4>
+                    <h4 style="font-size: 14px; margin-bottom: 10px; color: var(--primary);">Optional Additions</h4>
                     <div class="form-row">
                         <div class="form-group"><label>Service Name</label><input type="text" id="invFeeName" placeholder="e.g., Programming"></div>
                         <div class="form-group"><label>Fee Amount ($)</label><input type="number" id="invFeeAmount" min="0" step="0.01" value="0"></div>
                     </div>
+                    <div class="form-group"><label>Apply Discount ($)</label><input type="number" id="invDiscount" min="0" step="0.01" value="0"></div>
                     
-                    <button class="btn btn-success admin-only-btn" disabled onclick="finalizeInvoice()"><i class="fas fa-lock"></i> Generate & Save</button>
+                    <button class="btn btn-success admin-only-btn" disabled onclick="finalizeInvoice()"><i class="fas fa-print"></i> Generate Invoice & Save</button>
                 </div>
 
                 <div class="card">
@@ -218,8 +225,12 @@
                             <thead><tr><th>Item</th><th>Price</th><th>Qty</th><th>Total</th><th>Action</th></tr></thead>
                             <tbody id="pendingInvoiceBody"></tbody>
                         </table>
-                        <div style="text-align: right; margin-top: 15px; font-size: 18px; font-weight: bold;">
-                            Subtotal: <span id="pendingTotal" style="color: var(--primary);">$0.00</span>
+                        <div style="text-align: right; margin-top: 15px; font-size: 15px; color: var(--text-muted);">
+                            Subtotal: <span id="pendingSubtotal">$0.00</span><br>
+                            Discount: <span id="pendingDiscountTxt" style="color:var(--danger);">-$0.00</span>
+                        </div>
+                        <div style="text-align: right; margin-top: 5px; font-size: 18px; font-weight: bold;">
+                            Grand Total: <span id="pendingTotal" style="color: var(--primary);">$0.00</span>
                         </div>
                     </div>
                 </div>
@@ -236,7 +247,7 @@
                     <input type="file" id="backupFileInput" accept=".json" style="display: none;" onchange="restoreBackup(event)">
                     
                     <div class="dropdown">
-                        <button class="btn btn-warning btn-sm"><i class="fas fa-file-excel"></i> Export to Excel <i class="fas fa-chevron-down"></i></button>
+                        <button class="btn btn-warning btn-sm"><i class="fas fa-file-excel"></i> Export <i class="fas fa-chevron-down"></i></button>
                         <div class="dropdown-content">
                             <a onclick="exportExcel('inventory')"><i class="fas fa-boxes" style="color:#16a34a; width:20px;"></i> Export Inventory</a>
                             <a onclick="exportExcel('sales_ledger')"><i class="fas fa-file-invoice-dollar" style="color:#16a34a; width:20px;"></i> Export Sales Ledger</a>
@@ -259,13 +270,22 @@
                     <div>
                         <div class="pnl-row"><span>Gross Revenue:</span> <strong id="pnlRev">$0.00</strong></div>
                         <div class="pnl-row" style="color: var(--danger);"><span>Cost of Goods Sold:</span> <strong id="pnlCogs">-$0.00</strong></div>
+                        <div class="pnl-row" style="color: var(--danger);"><span>Discounts Given:</span> <strong id="pnlDiscounts">-$0.00</strong></div>
                         <div class="pnl-row total" style="color: var(--success);"><span>Net Profit:</span> <span id="pnlNet">$0.00</span></div>
                     </div>
                 </div>
+                
+                <!-- New Customer Debits Card -->
                 <div class="card">
-                    <div class="card-title"><span><i class="fas fa-chart-pie" style="color: #8b5cf6;"></i> Revenue by Model</span></div>
-                    <canvas id="revenuePieChart" style="max-height: 250px;"></canvas>
+                    <div class="card-title"><span><i class="fas fa-users" style="color: var(--danger);"></i> Customer Balances (Unpaid)</span></div>
+                    <div class="table-responsive" style="max-height: 200px;">
+                        <table style="font-size: 12px;">
+                            <thead><tr><th>Customer</th><th>Amount Owed</th></tr></thead>
+                            <tbody id="repBalancesBody"></tbody>
+                        </table>
+                    </div>
                 </div>
+
                 <div class="card">
                     <div class="card-title"><span><i class="fas fa-fire" style="color: #f59e0b;"></i> Top Moving ECUs</span></div>
                     <table style="font-size: 13px;">
@@ -278,11 +298,12 @@
                     <div class="card-title"><span><i class="fas fa-file-invoice"></i> Overall Sales Ledger</span></div>
                     <div class="table-responsive">
                         <table>
-                            <thead><tr><th>Date</th><th>Invoice #</th><th>Customer Name</th><th>Items Sold</th><th>Total Value</th></tr></thead>
+                            <thead><tr><th>Date</th><th>Invoice #</th><th>Customer</th><th>Status</th><th>Total Value</th><th>Action</th></tr></thead>
                             <tbody id="salesLedgerBody"></tbody>
                         </table>
                     </div>
                 </div>
+                
                 <div class="card full-width-card">
                     <div class="card-title"><span><i class="fas fa-box-open"></i> Sales Report (Per Item)</span></div>
                     <div class="table-responsive">
@@ -295,8 +316,7 @@
             </div>
         </div>
 
-        <!-- ================= MODALS & DOCS ================= -->
-        <!-- Auth Login Modal -->
+        <!-- ================= MODALS & PRINT DOCS ================= -->
         <div id="loginModal" class="modal">
             <div class="modal-content" style="width: 400px;">
                 <span class="close-btn" onclick="document.getElementById('loginModal').style.display='none'">&times;</span>
@@ -307,7 +327,6 @@
             </div>
         </div>
 
-        <!-- History Modal -->
         <div id="historyModal" class="modal">
             <div class="modal-content">
                 <span class="close-btn" onclick="document.getElementById('historyModal').style.display='none'">&times;</span>
@@ -321,18 +340,51 @@
             </div>
         </div>
 
-        <!-- Hidden Print Templates -->
+        <!-- Printable Invoice Template -->
         <div id="invoice-document" class="print-doc">
             <div class="doc-header">
-                <div><h1>ECU MANAGER PRO</h1><p>Swarchak Co. 60 Meter Street, Erbil, Iraq</p></div>
-                <div style="text-align: right;"><h2 style="color:#ccc; margin-bottom: 5px;">INVOICE</h2><strong>Invoice #:</strong> <span id="docInvNum"></span><br><strong>Date:</strong> <span id="docDate"></span></div>
+                <div>
+                    <h1>ECU MANAGER PRO</h1>
+                    <p>123 Generator Avenue, Power City, TX</p>
+                </div>
+                <div style="text-align: right;">
+                    <h2 style="color:#ccc; margin-bottom: 5px;">INVOICE</h2>
+                    <strong>Invoice #:</strong> <span id="docInvNum"></span><br>
+                    <strong>Date & Time:</strong> <span id="docDate"></span>
+                </div>
             </div>
-            <div style="margin-bottom: 30px;"><h3 style="font-size: 14px; color: #666; border-bottom: 1px solid #ccc; padding-bottom:5px; margin-bottom:5px;">Bill To:</h3><strong><span id="docCustomer"></span></strong></div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 30px;">
+                <div style="width: 48%;">
+                    <h3 style="font-size: 14px; color: #666; border-bottom: 1px solid #ccc; padding-bottom:5px; margin-bottom:5px;">Bill To:</h3>
+                    <strong><span id="docCustomer"></span></strong><br>
+                    Phone: <span id="docPhone"></span>
+                </div>
+                <div style="width: 40%; background: #f8fafc; padding: 10px; border: 1px solid #e2e8f0;">
+                    <strong>Payment Terms:</strong> <span id="docPayType"></span><br>
+                    <span id="docDueDateWrapper" style="display:none; color:var(--danger); font-weight:bold;">Due By: <span id="docDueDate"></span></span>
+                </div>
+            </div>
+            
             <table class="doc-table" style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-                <thead><tr><th style="padding:10px; border:1px solid #000; text-align:left;">Item Description</th><th style="padding:10px; border:1px solid #000; text-align:right;">Price</th><th style="padding:10px; border:1px solid #000; text-align:center;">Qty</th><th style="padding:10px; border:1px solid #000; text-align:right;">Line Total</th></tr></thead>
+                <thead><tr><th>Item Description</th><th style="text-align:right;">Unit Price</th><th style="text-align:center;">Qty</th><th style="text-align:right;">Line Total</th></tr></thead>
                 <tbody id="docInvoiceBody"></tbody>
             </table>
-            <div style="text-align: right; font-size: 18px; margin-top: 20px;"><strong>Total Due: <span id="docTotal" style="color:var(--primary);"></span></strong></div>
+            
+            <div style="display: flex; justify-content: flex-end;">
+                <div style="width: 300px;">
+                    <div style="display:flex; justify-content:space-between; padding:5px 0;"><span>Subtotal:</span><span id="docSubtotal"></span></div>
+                    <div style="display:flex; justify-content:space-between; padding:5px 0; color:var(--danger);"><span>Discount:</span><span id="docDiscount"></span></div>
+                    <div style="display:flex; justify-content:space-between; padding:10px 0; border-top: 2px solid #000; font-size:18px; font-weight:bold; color:var(--primary);">
+                        <span>Total Due:</span><span id="docTotal"></span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Signature Section -->
+            <div class="doc-signatures">
+                <div>Authorized Signature</div>
+                <div>Customer Signature</div>
+            </div>
         </div>
 
         <div id="inventory-document" style="display: none; background: white; padding: 20px; color: black; font-family: sans-serif;">
@@ -377,13 +429,12 @@
         function calculateRetail() {
             let cost = parseFloat(document.getElementById('ecuCost').value) || 0;
             let markup = parseFloat(document.getElementById('ecuMarkup').value) || 0;
-            if (cost >= 0 && markup >= 0) {
-                document.getElementById('ecuRetail').value = (cost + (cost * (markup / 100))).toFixed(2);
-            }
+            if (cost >= 0 && markup >= 0) document.getElementById('ecuRetail').value = (cost + (cost * (markup / 100))).toFixed(2);
         }
 
-        // Live draft update for service fee
+        // Live draft updates
         document.getElementById('invFeeAmount').addEventListener('input', renderPendingInvoice);
+        document.getElementById('invDiscount').addEventListener('input', renderPendingInvoice);
 
         // ================= AUTHENTICATION LOGIC =================
         auth.onAuthStateChanged(async (user) => {
@@ -391,22 +442,16 @@
             const adminBtns = document.querySelectorAll('.admin-only-btn');
             
             if (user) {
-                authToken = await user.getIdToken();
-                isAdmin = true;
-                authBtn.innerText = "Logout";
-                
+                authToken = await user.getIdToken(); isAdmin = true; authBtn.innerText = "Logout";
                 adminBtns.forEach(btn => {
                     btn.disabled = false;
                     if(btn.innerHTML.includes('Add Stock')) btn.innerHTML = '<i class="fas fa-save"></i> Save to Cloud';
-                    if(btn.innerHTML.includes('Build Invoice')) btn.innerHTML = '<i class="fas fa-plus"></i> Add Item';
-                    if(btn.innerHTML.includes('Generate')) btn.innerHTML = '<i class="fas fa-print"></i> Generate Invoice & Save';
-                    if(btn.innerHTML.includes('Restore')) btn.innerHTML = '<i class="fas fa-upload"></i> Restore from Backup';
+                    if(btn.innerHTML.includes('Add Item')) btn.innerHTML = '<i class="fas fa-plus"></i> Add Item';
+                    if(btn.innerHTML.includes('Generate Invoice')) btn.innerHTML = '<i class="fas fa-print"></i> Generate Invoice & Save';
+                    if(btn.innerHTML.includes('Restore')) btn.innerHTML = '<i class="fas fa-upload"></i> Restore';
                 });
             } else {
-                authToken = null;
-                isAdmin = false;
-                authBtn.innerText = "Login (Admin)";
-                
+                authToken = null; isAdmin = false; authBtn.innerText = "Login (Admin)";
                 adminBtns.forEach(btn => {
                     btn.disabled = true;
                     if(btn.innerHTML.includes('Save to Cloud')) btn.innerHTML = '<i class="fas fa-lock"></i> Login to Add Stock';
@@ -415,62 +460,39 @@
                     if(btn.innerHTML.includes('Restore')) btn.innerHTML = '<i class="fas fa-lock"></i> Login to Restore';
                 });
             }
-            updateInventoryUI(); 
+            updateInventoryUI(); updateReports();
         });
 
         function toggleAuthModal() {
-            if (isAdmin) { auth.signOut().then(() => alert("Logged out successfully. App is now Read-Only.")); } 
-            else { document.getElementById('loginModal').style.display = 'block'; }
+            if (isAdmin) auth.signOut().then(() => alert("Logged out successfully.")); 
+            else document.getElementById('loginModal').style.display = 'block';
         }
-
         function loginAdmin() {
-            const email = document.getElementById('authEmail').value;
-            const pass = document.getElementById('authPassword').value;
-            auth.signInWithEmailAndPassword(email, pass)
-                .then(() => {
-                    document.getElementById('loginModal').style.display = 'none';
-                    alert("Welcome Admin! You now have write access.");
-                })
-                .catch(error => alert("Login Failed: " + error.message));
+            const e = document.getElementById('authEmail').value, p = document.getElementById('authPassword').value;
+            auth.signInWithEmailAndPassword(e, p).then(() => { document.getElementById('loginModal').style.display = 'none'; alert("Welcome Admin!"); }).catch(err => alert("Login Failed: " + err.message));
         }
 
         // ================= CLOUD SYNC LOGIC =================
-                async function loadDataFromFirebase() {
+        async function loadDataFromFirebase() {
             const status = document.getElementById('cloudStatus');
             try {
-                // 1. Get Cloud Data
                 const response = await fetch(FIREBASE_URL);
                 const data = await response.json();
-                let cloudInventory = data ? (data.inventory || []) : [];
+                
+                let cloudInv = data ? (data.inventory || []) : [];
                 let cloudSales = data ? (data.salesLedger || []) : [];
                 
-                // 2. Get Local Backup Data
-                let localInv1 = JSON.parse(localStorage.getItem('ecuInventory')) || [];
-                let localInv2 = JSON.parse(localStorage.getItem('ecuInventory_backup')) || [];
-                let localSales1 = JSON.parse(localStorage.getItem('ecuSalesLedger')) || [];
-                let localSales2 = JSON.parse(localStorage.getItem('ecuSales_backup')) || [];
+                let localInv = JSON.parse(localStorage.getItem('ecuInventory')) || [];
+                let localSales = JSON.parse(localStorage.getItem('ecuSalesLedger')) || [];
                 
-                // 3. Compare and use whichever has the MOST data (Rescues your 20 ECUs)
-                let bestInventory = cloudInventory;
-                if (localInv1.length > bestInventory.length) bestInventory = localInv1;
-                if (localInv2.length > bestInventory.length) bestInventory = localInv2;
-                
-                let bestSales = cloudSales;
-                if (localSales1.length > bestSales.length) bestSales = localSales1;
-                if (localSales2.length > bestSales.length) bestSales = localSales2;
-
-                inventory = bestInventory;
-                salesLedger = bestSales;
+                inventory = (localInv.length > cloudInv.length) ? localInv : cloudInv;
+                salesLedger = (localSales.length > cloudSales.length) ? localSales : cloudSales;
 
                 status.innerHTML = '<i class="fas fa-check-circle"></i> Cloud Synced';
                 status.style.color = '#16a34a'; status.style.background = '#dcfce7';
 
                 updateInventoryUI(); updateReports(); populateInvoiceDropdown();
-                
-                // Alert you if it found the missing data
-                if (bestInventory.length > cloudInventory.length) {
-                    alert("DATA RESCUED: Found your missing ECUs in local memory! Please login as Admin and do a manual 'Backup' right now, then add 1 dummy ECU to force the system to upload everything to Firebase.");
-                }
+                if (localInv.length > cloudInv.length) alert("DATA RESCUED from local memory! Please login and click Save to Cloud.");
 
             } catch (error) {
                 status.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Offline';
@@ -482,28 +504,20 @@
         }
 
         async function saveData() { 
-            if (!isAdmin) return alert("You must be logged in to save data to the cloud.");
-
-            const status = document.getElementById('cloudStatus');
-            status.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+            if (!isAdmin) return alert("You must be logged in to save data.");
+            const status = document.getElementById('cloudStatus'); status.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
             
             const dbState = { inventory: inventory, salesLedger: salesLedger };
             localStorage.setItem('ecuInventory_backup', JSON.stringify(inventory)); 
             localStorage.setItem('ecuSales_backup', JSON.stringify(salesLedger)); 
 
             try {
-                await fetch(`${FIREBASE_URL}?auth=${authToken}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(dbState)
-                });
+                await fetch(`${FIREBASE_URL}?auth=${authToken}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dbState) });
                 status.innerHTML = '<i class="fas fa-check-circle"></i> Saved to Cloud';
             } catch (error) {
                 status.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Save Failed';
-                alert("Network error: Could not save to cloud.");
             }
         }
-
         document.addEventListener("DOMContentLoaded", () => loadDataFromFirebase());
 
         function switchTab(tabName) {
@@ -517,9 +531,7 @@
 
         // ================= INVENTORY LOGIC =================
         document.getElementById('ecuForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            if(!isAdmin) return;
-
+            e.preventDefault(); if(!isAdmin) return;
             const dateStr = document.getElementById('ecuDate').value;
             const nameInput = document.getElementById('ecuName').value.trim();
             const oldPartsInput = document.getElementById('ecuOldParts').value.trim();
@@ -528,174 +540,79 @@
             const newRetail = parseFloat(document.getElementById('ecuRetail').value);
             const addedQty = parseInt(document.getElementById('ecuQty').value);
 
-            let existingItem = inventory.find(i => i.name.toLowerCase() === nameInput.toLowerCase());
-
-            if (existingItem) {
-                existingItem.history = existingItem.history || [];
-                const currentTotalValue = (existingItem.qty > 0 ? existingItem.qty : 0) * existingItem.cost;
-                const newAddedValue = addedQty * addedCost;
-                const newTotalQty = (existingItem.qty > 0 ? existingItem.qty : 0) + addedQty;
-                
-                existingItem.qty = newTotalQty; 
-                existingItem.cost = (currentTotalValue + newAddedValue) / newTotalQty;
-                existingItem.retail = newRetail;
-                
-                if(!existingItem.compat.toLowerCase().includes(compat.toLowerCase())) existingItem.compat += ", " + compat; 
-                if(oldPartsInput && !(existingItem.oldParts||"").toLowerCase().includes(oldPartsInput.toLowerCase())) {
-                    existingItem.oldParts = existingItem.oldParts ? existingItem.oldParts + ", " + oldPartsInput : oldPartsInput;
-                }
-                
-                existingItem.history.push({ date: dateStr, type: 'Restock', qty: addedQty, price: addedCost, note: 'Added to existing stock' });
-                alert(`Merged with existing model. New Average Cost: ${formatCur(existingItem.cost)}`);
+            let existing = inventory.find(i => i.name.toLowerCase() === nameInput.toLowerCase());
+            if (existing) {
+                existing.history = existing.history || [];
+                const currentTotalValue = (existing.qty > 0 ? existing.qty : 0) * existing.cost;
+                const newTotalQty = (existing.qty > 0 ? existing.qty : 0) + addedQty;
+                existing.qty = newTotalQty; 
+                existing.cost = (currentTotalValue + (addedQty * addedCost)) / newTotalQty;
+                existing.retail = newRetail;
+                if(!existing.compat.toLowerCase().includes(compat.toLowerCase())) existing.compat += ", " + compat; 
+                if(oldPartsInput && !(existing.oldParts||"").toLowerCase().includes(oldPartsInput.toLowerCase())) existing.oldParts = existing.oldParts ? existing.oldParts + ", " + oldPartsInput : oldPartsInput;
+                existing.history.push({ date: dateStr, type: 'Restock', qty: addedQty, price: addedCost, note: 'Added to existing stock' });
+                alert(`Merged with existing model. New Average Cost: ${formatCur(existing.cost)}`);
             } else {
-                inventory.push({ 
-                    id: Date.now().toString(), name: nameInput, oldParts: oldPartsInput, compat: compat, cost: addedCost, retail: newRetail, qty: addedQty, 
-                    soldQty: 0, revenue: 0, cogs: 0, profit: 0, history: [{ date: dateStr, type: 'Initial Stock', qty: addedQty, price: addedCost }]
-                });
+                inventory.push({ id: Date.now().toString(), name: nameInput, oldParts: oldPartsInput, compat: compat, cost: addedCost, retail: newRetail, qty: addedQty, soldQty: 0, revenue: 0, cogs: 0, profit: 0, history: [{ date: dateStr, type: 'Initial Stock', qty: addedQty, price: addedCost }] });
                 alert('New ECU added successfully!');
             }
-
             await saveData(); updateInventoryUI(); 
-            document.getElementById('ecuName').value = '';
-            document.getElementById('ecuOldParts').value = '';
-            document.getElementById('ecuCompat').value = '';
-            document.getElementById('ecuCost').value = '';
-            document.getElementById('ecuMarkup').value = '';
-            document.getElementById('ecuRetail').value = '';
-            document.getElementById('ecuQty').value = '1';
+            document.getElementById('ecuName').value = ''; document.getElementById('ecuOldParts').value = ''; document.getElementById('ecuCompat').value = ''; document.getElementById('ecuCost').value = ''; document.getElementById('ecuMarkup').value = ''; document.getElementById('ecuRetail').value = ''; document.getElementById('ecuQty').value = '1';
         });
 
-        async function deleteItem(id) {
-            if(!isAdmin) return alert("Login required to delete.");
-            if(confirm('Delete this ECU permanently?')) { inventory = inventory.filter(i => i.id !== id); await saveData(); updateInventoryUI(); }
-        }
-
+        async function deleteItem(id) { if(!isAdmin) return; if(confirm('Delete this ECU?')) { inventory = inventory.filter(i => i.id !== id); await saveData(); updateInventoryUI(); } }
         async function editPrice(id) {
-            if(!isAdmin) return alert("Login required to edit prices.");
-            let item = inventory.find(i => i.id === id);
-            if(!item) return;
-            
-            let newPriceStr = prompt(`Enter new Retail Price for ${item.name}:\n(Current: ${formatCur(item.retail)})`, item.retail);
-            if(newPriceStr === null) return; 
-            
-            let newPrice = parseFloat(newPriceStr);
-            if(isNaN(newPrice) || newPrice < 0) return alert("Invalid price entered.");
-            
-            item.retail = newPrice;
-            item.history = item.history || [];
-            item.history.push({ date: new Date().toISOString().split('T')[0], type: 'Price Update', qty: '-', price: newPrice, note: 'Retail price adjusted manually' });
-            
-            await saveData(); updateInventoryUI(); populateInvoiceDropdown();
+            if(!isAdmin) return; let item = inventory.find(i => i.id === id); if(!item) return;
+            let val = prompt(`New Retail Price for ${item.name}:`, item.retail);
+            if(val !== null && !isNaN(parseFloat(val)) && parseFloat(val) >= 0) { item.retail = parseFloat(val); item.history = item.history || []; item.history.push({ date: new Date().toISOString().split('T')[0], type: 'Price Update', qty: '-', price: item.retail, note: 'Manual' }); await saveData(); updateInventoryUI(); populateInvoiceDropdown(); }
         }
-
         async function editCost(id) {
-            if(!isAdmin) return alert("Login required to edit costs.");
-            let item = inventory.find(i => i.id === id);
-            if(!item) return;
-            
-            let newCostStr = prompt(`Enter new Average Unit Cost for ${item.name}:\n(Current: ${formatCur(item.cost)})`, item.cost);
-            if(newCostStr === null) return; 
-            
-            let newCost = parseFloat(newCostStr);
-            if(isNaN(newCost) || newCost < 0) return alert("Invalid cost entered.");
-            
-            item.cost = newCost;
-            item.history = item.history || [];
-            item.history.push({ date: new Date().toISOString().split('T')[0], type: 'Cost Update', qty: '-', price: newCost, note: 'Unit Cost adjusted manually' });
-            
-            await saveData(); updateInventoryUI(); updateReports();
+            if(!isAdmin) return; let item = inventory.find(i => i.id === id); if(!item) return;
+            let val = prompt(`New Avg Cost for ${item.name}:`, item.cost);
+            if(val !== null && !isNaN(parseFloat(val)) && parseFloat(val) >= 0) { item.cost = parseFloat(val); item.history = item.history || []; item.history.push({ date: new Date().toISOString().split('T')[0], type: 'Cost Update', qty: '-', price: item.cost, note: 'Manual' }); await saveData(); updateInventoryUI(); updateReports(); }
         }
 
         function filterInventory() {
             const query = document.getElementById('invSearch').value.toLowerCase();
-            const rows = document.querySelectorAll('.inv-row');
-            rows.forEach(row => {
-                const textData = row.getAttribute('data-search').toLowerCase();
-                row.style.display = textData.includes(query) ? '' : 'none';
-            });
+            document.querySelectorAll('.inv-row').forEach(row => { row.style.display = row.getAttribute('data-search').toLowerCase().includes(query) ? '' : 'none'; });
         }
 
         function updateInventoryUI() {
-            const tbody = document.getElementById('inventoryBody');
-            const dataList = document.getElementById('ecuList');
-            tbody.innerHTML = ''; dataList.innerHTML = '';
-            let outOfStockItems = [];
+            const tbody = document.getElementById('inventoryBody'); const dataList = document.getElementById('ecuList');
+            tbody.innerHTML = ''; dataList.innerHTML = ''; let outOfStockItems = [];
 
-            if(inventory.length === 0 || (inventory.length === 1 && inventory[0].id === 'SERVICES_FEE_TRACKER')) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Your inventory is empty. Add items above.</td></tr>';
-                return;
-            }
+            if(inventory.length === 0 || (inventory.length === 1 && inventory[0].id === 'SERVICES_FEE_TRACKER')) return tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Your inventory is empty.</td></tr>';
 
             inventory.forEach(item => {
-                if (item.id === 'SERVICES_FEE_TRACKER') return; // Hide background service tracker from main inventory
-
-                item.history = item.history || [];
-                dataList.innerHTML += `<option value="${item.name}">`;
+                if (item.id === 'SERVICES_FEE_TRACKER') return;
+                item.history = item.history || []; dataList.innerHTML += `<option value="${item.name}">`;
                 if (item.qty <= 0) outOfStockItems.push(item);
                 
-                const deleteBtnHtml = isAdmin ? `<button class="btn btn-danger btn-sm" onclick="deleteItem('${item.id}')"><i class="fas fa-trash"></i></button>` : `<i class="fas fa-lock" style="color:#ccc;" title="Login to delete"></i>`;
-                const editPriceHtml = isAdmin ? `<i class="fas fa-edit edit-icon" onclick="editPrice('${item.id}')" title="Edit Retail Price"></i>` : '';
-                const editCostHtml = isAdmin ? `<i class="fas fa-edit edit-icon" onclick="editCost('${item.id}')" title="Edit Cost Price"></i>` : '';
+                const deleteBtnHtml = isAdmin ? `<button class="btn btn-danger btn-sm" onclick="deleteItem('${item.id}')"><i class="fas fa-trash"></i></button>` : `<i class="fas fa-lock" style="color:#ccc;"></i>`;
+                const editPriceHtml = isAdmin ? `<i class="fas fa-edit edit-icon" onclick="editPrice('${item.id}')"></i>` : '';
+                const editCostHtml = isAdmin ? `<i class="fas fa-edit edit-icon" onclick="editCost('${item.id}')"></i>` : '';
                 const oldPartsHtml = item.oldParts ? `<br><small style="color:var(--warning); font-weight:600;">Replaces: ${item.oldParts}</small>` : '';
 
-                const tr = document.createElement('tr');
-                tr.className = 'inv-row';
-                tr.setAttribute('data-search', `${item.name} ${item.compat} ${item.oldParts || ''}`);
-
-                tr.innerHTML = `
-                    <td>
-                        <strong>${item.name}</strong> <i class="fas fa-info-circle info-icon" onclick="showHistory('${item.id}')"></i>
-                        <br><small style="color:#666">Fits: ${item.compat}</small>
-                        ${oldPartsHtml}
-                    </td>
-                    <td>${formatCur(item.cost)} ${editCostHtml}</td>
-                    <td>${formatCur(item.retail)} ${editPriceHtml}</td>
-                    <td><span class="badge ${item.qty <= 0 ? 'badge-danger' : ''}">${item.qty}</span></td>
-                    <td>${formatCur(item.cost * (item.qty > 0 ? item.qty : 0))}</td>
-                    <td>${deleteBtnHtml}</td>
-                `;
+                const tr = document.createElement('tr'); tr.className = 'inv-row'; tr.setAttribute('data-search', `${item.name} ${item.compat} ${item.oldParts || ''}`);
+                tr.innerHTML = `<td><strong>${item.name}</strong> <i class="fas fa-info-circle info-icon" onclick="showHistory('${item.id}')"></i><br><small style="color:#666">Fits: ${item.compat}</small>${oldPartsHtml}</td><td>${formatCur(item.cost)} ${editCostHtml}</td><td>${formatCur(item.retail)} ${editPriceHtml}</td><td><span class="badge ${item.qty <= 0 ? 'badge-danger' : ''}">${item.qty}</span></td><td>${formatCur(item.cost * (item.qty > 0 ? item.qty : 0))}</td><td>${deleteBtnHtml}</td>`;
                 tbody.appendChild(tr);
             });
-
             filterInventory();
-
             const stockAlert = document.getElementById('stockAlert');
-            if (outOfStockItems.length > 0) {
-                document.getElementById('oosCountText').innerText = outOfStockItems.length;
-                stockAlert.style.display = 'block';
-                document.getElementById('oosList').innerHTML = outOfStockItems.map(i => `<li>${i.name}</li>`).join('');
-            } else stockAlert.style.display = 'none';
+            if (outOfStockItems.length > 0) { document.getElementById('oosCountText').innerText = outOfStockItems.length; stockAlert.style.display = 'block'; document.getElementById('oosList').innerHTML = outOfStockItems.map(i => `<li>${i.name}</li>`).join(''); } 
+            else stockAlert.style.display = 'none';
         }
 
-        function toggleOosList() {
-            const list = document.getElementById('oosList');
-            list.style.display = list.style.display === 'block' ? 'none' : 'block';
-        }
-
+        function toggleOosList() { const l = document.getElementById('oosList'); l.style.display = l.style.display === 'block' ? 'none' : 'block'; }
         function showHistory(id) {
             const item = inventory.find(i => i.id === id); if(!item) return;
             document.getElementById('histTitle').innerText = `Movement History: ${item.name}`;
             const tbody = document.getElementById('historyBody'); tbody.innerHTML = '';
             [...(item.history||[])].sort((a,b) => new Date(b.date)-new Date(a.date)).forEach(r => {
-                let color = 'var(--primary)';
-                if(r.type === 'Sale') color = 'var(--success)';
-                if(r.type === 'Price Update' || r.type === 'Cost Update') color = 'var(--warning)';
+                let color = 'var(--primary)'; if(r.type === 'Sale') color = 'var(--success)'; if(r.type === 'Price Update' || r.type === 'Cost Update') color = 'var(--warning)';
                 tbody.innerHTML += `<tr><td>${new Date(r.date).toLocaleDateString()}</td><td style="color:${color}; font-weight:600;">${r.type}</td><td>${r.qty}</td><td>${formatCur(r.price)}</td><td style="font-size:12px;">${r.note || ''}</td></tr>`;
             });
             document.getElementById('historyModal').style.display = 'block';
-        }
-        function closeModal() { document.getElementById('historyModal').style.display = 'none'; }
-        window.onclick = function(e) { if (e.target == document.getElementById('historyModal')) closeModal(); }
-
-        function downloadInventoryPDF() {
-            document.getElementById('docInvRepDate').innerText = new Date().toLocaleDateString();
-            const docBody = document.getElementById('docInventoryBody'); docBody.innerHTML = '';
-            inventory.forEach(item => {
-                if(item.id === 'SERVICES_FEE_TRACKER') return;
-                docBody.innerHTML += `<tr><td style="padding:6px; border:1px solid #ccc;">${item.name}</td><td style="padding:6px; border:1px solid #ccc; text-align:center;">${item.qty}</td><td style="padding:6px; border:1px solid #ccc; text-align:right;">${formatCur(item.cost * (item.qty > 0 ? item.qty : 0))}</td></tr>`;
-            });
-            const el = document.getElementById('inventory-document'); el.style.display = 'block';
-            html2pdf().set({ margin: 10, filename: `Inventory_Report.pdf`, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } }).from(el).save().then(() => el.style.display = 'none');
         }
 
         // ================= INVOICING LOGIC =================
@@ -706,51 +623,46 @@
 
         function addToInvoice() {
             if(!isAdmin) return;
-            const itemId = document.getElementById('invItemSelect').value;
-            const qty = parseInt(document.getElementById('invQty').value);
+            const itemId = document.getElementById('invItemSelect').value; const qty = parseInt(document.getElementById('invQty').value);
             if(!itemId || qty <= 0) return alert("Select item and quantity.");
-            const invItem = inventory.find(i => i.id === itemId);
-            if(qty > invItem.qty) return alert(`Not enough stock!`);
+            const invItem = inventory.find(i => i.id === itemId); if(qty > invItem.qty) return alert(`Not enough stock!`);
             const existing = currentInvoice.find(i => i.id === itemId);
-            if(existing) {
-                if (existing.qty + qty > invItem.qty) return alert("Exceeds stock.");
-                existing.qty += qty;
-            } else currentInvoice.push({ ...invItem, qty: qty });
+            if(existing) { if (existing.qty + qty > invItem.qty) return alert("Exceeds stock."); existing.qty += qty; } else currentInvoice.push({ ...invItem, qty: qty });
             renderPendingInvoice();
         }
-
         function removeInvoiceItem(id) { currentInvoice = currentInvoice.filter(i => i.id !== id); renderPendingInvoice(); }
 
         function renderPendingInvoice() {
-            const body = document.getElementById('pendingInvoiceBody'); body.innerHTML = ''; let total = 0;
+            const body = document.getElementById('pendingInvoiceBody'); body.innerHTML = ''; let subtotal = 0;
+            currentInvoice.forEach(item => { const lineTotal = item.retail * item.qty; subtotal += lineTotal; body.innerHTML += `<tr><td>${item.name}</td><td>${formatCur(item.retail)}</td><td>${item.qty}</td><td>${formatCur(lineTotal)}</td><td><button class="btn btn-danger btn-sm" onclick="removeInvoiceItem('${item.id}')"><i class="fas fa-times"></i></button></td></tr>`; });
             
-            // Render physical items
-            currentInvoice.forEach(item => {
-                const lineTotal = item.retail * item.qty; total += lineTotal;
-                body.innerHTML += `<tr><td>${item.name}</td><td>${formatCur(item.retail)}</td><td>${item.qty}</td><td>${formatCur(lineTotal)}</td><td><button class="btn btn-danger btn-sm" onclick="removeInvoiceItem('${item.id}')"><i class="fas fa-times"></i></button></td></tr>`;
-            });
-            
-            // Render optional service fee if added
             let feeAmount = parseFloat(document.getElementById('invFeeAmount').value) || 0;
-            if (feeAmount > 0) {
-                let feeName = document.getElementById('invFeeName').value.trim() || "Service Fee";
-                body.innerHTML += `<tr><td><em>${feeName}</em></td><td>${formatCur(feeAmount)}</td><td>1</td><td>${formatCur(feeAmount)}</td><td>-</td></tr>`;
-                total += feeAmount;
-            }
-
-            document.getElementById('pendingTotal').innerText = formatCur(total);
+            if (feeAmount > 0) { let feeName = document.getElementById('invFeeName').value.trim() || "Service Fee"; body.innerHTML += `<tr><td><em>${feeName}</em></td><td>${formatCur(feeAmount)}</td><td>1</td><td>${formatCur(feeAmount)}</td><td>-</td></tr>`; subtotal += feeAmount; }
+            
+            let discount = parseFloat(document.getElementById('invDiscount').value) || 0;
+            
+            document.getElementById('pendingSubtotal').innerText = formatCur(subtotal);
+            document.getElementById('pendingDiscountTxt').innerText = `-${formatCur(discount)}`;
+            document.getElementById('pendingTotal').innerText = formatCur(subtotal - discount);
         }
 
         async function finalizeInvoice() {
             let feeAmount = parseFloat(document.getElementById('invFeeAmount').value) || 0;
-            if(!isAdmin || (currentInvoice.length === 0 && feeAmount <= 0)) return alert("Add items or services to generate invoice.");
+            if(!isAdmin || (currentInvoice.length === 0 && feeAmount <= 0)) return alert("Add items to generate invoice.");
             
             const invNum = "INV-" + Math.floor(10000 + Math.random() * 90000);
             const customerName = document.getElementById('invCustomer').value || "Walk-in";
-            let docBody = ''; let grandTotal = 0; const saleDate = new Date().toISOString().split('T')[0];
-            let soldItemsNames = [];
+            const phone = document.getElementById('invPhone').value || "N/A";
+            const payType = document.getElementById('invPayType').value;
+            const dueDate = document.getElementById('invDueDate').value;
+            const discount = parseFloat(document.getElementById('invDiscount').value) || 0;
+            
+            let subtotal = 0; let cogsTotal = 0;
+            const saleDate = new Date().toISOString().split('T')[0];
+            const saleTime = new Date().toLocaleString();
+            let itemsToSave = [];
 
-            // Process physical items
+            // Physical Items
             currentInvoice.forEach(invItem => {
                 let dbItem = inventory.find(i => i.id === invItem.id);
                 if(dbItem) {
@@ -760,92 +672,97 @@
                     dbItem.history = dbItem.history || [];
                     dbItem.history.push({ date: saleDate, type: 'Sale', qty: invItem.qty, price: invItem.retail, note: `Sold to: ${customerName}` });
                 }
-                const lineTotal = invItem.retail * invItem.qty; grandTotal += lineTotal;
-                soldItemsNames.push(`${invItem.qty}x ${invItem.name}`);
-                docBody += `<tr><td style="padding:10px; border:1px solid #000;"><strong>${invItem.name}</strong></td><td style="padding:10px; border:1px solid #000; text-align:right;">${formatCur(invItem.retail)}</td><td style="padding:10px; border:1px solid #000; text-align:center;">${invItem.qty}</td><td style="padding:10px; border:1px solid #000; text-align:right;">${formatCur(lineTotal)}</td></tr>`;
+                const lineTotal = invItem.retail * invItem.qty; subtotal += lineTotal;
+                itemsToSave.push({ name: invItem.name, price: invItem.retail, qty: invItem.qty, total: lineTotal });
             });
 
-            // Process Service Fee
+            // Services
+            let serviceName = "";
             if (feeAmount > 0) {
-                let serviceName = document.getElementById('invFeeName').value.trim() || "Service / Inspection";
-                
-                docBody += `<tr><td style="padding:10px; border:1px solid #000;"><strong>${serviceName}</strong></td><td style="padding:10px; border:1px solid #000; text-align:right;">${formatCur(feeAmount)}</td><td style="padding:10px; border:1px solid #000; text-align:center;">1</td><td style="padding:10px; border:1px solid #000; text-align:right;">${formatCur(feeAmount)}</td></tr>`;
-                grandTotal += feeAmount;
-                soldItemsNames.push(`1x ${serviceName}`);
+                serviceName = document.getElementById('invFeeName').value.trim() || "Service / Inspection";
+                subtotal += feeAmount;
+                itemsToSave.push({ name: serviceName, price: feeAmount, qty: 1, total: feeAmount });
                 
                 let serviceTracker = inventory.find(i => i.id === 'SERVICES_FEE_TRACKER');
-                if (!serviceTracker) {
-                    serviceTracker = { id: 'SERVICES_FEE_TRACKER', name: 'Labor & Services (All)', compat: 'N/A', cost: 0, retail: 0, qty: '-', soldQty: 0, revenue: 0, cogs: 0, profit: 0, history: [] };
-                    inventory.push(serviceTracker);
-                }
-                serviceTracker.soldQty += 1;
-                serviceTracker.revenue += feeAmount;
-                serviceTracker.profit += feeAmount; // 100% profit for services
+                if (!serviceTracker) { serviceTracker = { id: 'SERVICES_FEE_TRACKER', name: 'Labor & Services', compat: 'N/A', cost: 0, retail: 0, qty: '-', soldQty: 0, revenue: 0, cogs: 0, profit: 0, history: [] }; inventory.push(serviceTracker); }
+                serviceTracker.soldQty += 1; serviceTracker.revenue += feeAmount; serviceTracker.profit += feeAmount;
                 serviceTracker.history.push({ date: saleDate, type: 'Sale', qty: 1, price: feeAmount, note: `Fee on ${invNum}` });
             }
-
-            salesLedger.push({ date: saleDate, invNum: invNum, customer: customerName, itemsStr: soldItemsNames.join(' | '), total: grandTotal });
-
-            document.getElementById('docInvNum').innerText = invNum; document.getElementById('docDate').innerText = new Date().toLocaleDateString();
-            document.getElementById('docCustomer').innerText = customerName; document.getElementById('docInvoiceBody').innerHTML = docBody;
-            document.getElementById('docTotal').innerText = formatCur(grandTotal);
             
+            let grandTotal = subtotal - discount;
+
+            // Save Invoice Record
+            const invoiceRecord = { date: saleDate, time: saleTime, invNum: invNum, customer: customerName, phone: phone, paymentType: payType, dueDate: dueDate, items: itemsToSave, subtotal: subtotal, discount: discount, total: grandTotal, status: payType === 'Cash' ? 'Paid' : 'Unpaid' };
+            salesLedger.push(invoiceRecord);
+
             await saveData(); updateInventoryUI();
-            document.body.classList.add('print-invoice'); window.print();
+            
+            // Print
+            printInvoiceFromData(invoiceRecord);
             
             setTimeout(() => { 
-                document.body.classList.remove('print-invoice'); 
-                currentInvoice = []; 
-                document.getElementById('invFeeName').value = '';
-                document.getElementById('invFeeAmount').value = '0';
-                renderPendingInvoice(); populateInvoiceDropdown(); 
+                currentInvoice = []; document.getElementById('invFeeName').value = ''; document.getElementById('invFeeAmount').value = '0'; document.getElementById('invDiscount').value = '0'; renderPendingInvoice(); populateInvoiceDropdown(); 
             }, 1000);
         }
 
-        // ================= BACKUP & EXPORT =================
-        function downloadBackup() {
-            const dataToBackup = { inventory: inventory, salesLedger: salesLedger };
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dataToBackup));
-            const a = document.createElement('a'); a.setAttribute("href", dataStr); a.setAttribute("download", `ECU_Backup_${new Date().toISOString().split('T')[0]}.json`);
-            document.body.appendChild(a); a.click(); a.remove();
+        // ================= PRINTING / REPRINTING =================
+        function printInvoiceFromData(invoice) {
+            document.getElementById('docInvNum').innerText = invoice.invNum;
+            document.getElementById('docDate').innerText = invoice.time || invoice.date;
+            document.getElementById('docCustomer').innerText = invoice.customer;
+            document.getElementById('docPhone').innerText = invoice.phone || "N/A";
+            document.getElementById('docPayType').innerText = invoice.paymentType || "Cash";
+            
+            if(invoice.paymentType === 'Debit' && invoice.dueDate) {
+                document.getElementById('docDueDateWrapper').style.display = 'block';
+                document.getElementById('docDueDate').innerText = invoice.dueDate;
+            } else { document.getElementById('docDueDateWrapper').style.display = 'none'; }
+            
+            let docBody = '';
+            if(invoice.items) {
+                invoice.items.forEach(item => { docBody += `<tr><td style="padding:10px; border:1px solid #000;"><strong>${item.name}</strong></td><td style="padding:10px; border:1px solid #000; text-align:right;">${formatCur(item.price)}</td><td style="padding:10px; border:1px solid #000; text-align:center;">${item.qty}</td><td style="padding:10px; border:1px solid #000; text-align:right;">${formatCur(item.total)}</td></tr>`; });
+            } else {
+                // Legacy support for older invoices before the update
+                docBody += `<tr><td style="padding:10px; border:1px solid #000;" colspan="3"><strong>${invoice.itemsStr}</strong></td><td style="padding:10px; border:1px solid #000; text-align:right;">${formatCur(invoice.total)}</td></tr>`;
+            }
+
+            document.getElementById('docInvoiceBody').innerHTML = docBody;
+            document.getElementById('docSubtotal').innerText = formatCur(invoice.subtotal || invoice.total);
+            document.getElementById('docDiscount').innerText = `-${formatCur(invoice.discount || 0)}`;
+            document.getElementById('docTotal').innerText = formatCur(invoice.total);
+            
+            document.body.classList.add('print-invoice'); window.print();
+            setTimeout(() => { document.body.classList.remove('print-invoice'); }, 500);
         }
 
-        function restoreBackup(event) {
+        function reprintInvoice(invNum) {
+            const invoice = salesLedger.find(s => s.invNum === invNum);
+            if(invoice) printInvoiceFromData(invoice);
+        }
+        
+        async function markAsPaid(invNum) {
             if(!isAdmin) return alert("Login required.");
-            const file = event.target.files[0]; if (!file) return;
-            const reader = new FileReader();
-            reader.onload = async function(e) {
-                try {
-                    const importedData = JSON.parse(e.target.result);
-                    if (importedData.inventory && importedData.salesLedger) {
-                        inventory = importedData.inventory; salesLedger = importedData.salesLedger;
-                        await saveData(); updateInventoryUI(); updateReports();
-                        alert("Database restored and synced to cloud successfully!");
-                    } else alert("Error: Invalid backup format.");
-                } catch (err) { alert("Error reading backup."); }
-                document.getElementById('backupFileInput').value = '';
-            };
-            reader.readAsText(file);
+            const invoice = salesLedger.find(s => s.invNum === invNum);
+            if(invoice && confirm(`Mark invoice ${invNum} as Paid?`)) {
+                invoice.status = 'Paid'; invoice.paymentType = 'Cash';
+                await saveData(); updateReports();
+            }
         }
 
+        // ================= EXPORTS =================
         function triggerCSVDownload(csvContent, filename) {
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const a = document.createElement("a"); a.setAttribute("href", URL.createObjectURL(blob)); a.setAttribute("download", filename);
-            document.body.appendChild(a); a.click(); a.remove();
+            const a = document.createElement("a"); a.setAttribute("href", URL.createObjectURL(blob)); a.setAttribute("download", filename); document.body.appendChild(a); a.click(); a.remove();
         }
-
         function exportExcel(type) {
             let csv = ""; let today = new Date().toISOString().split('T')[0];
             if (type === 'inventory') {
                 csv = "Model Name,Old Parts,Compatibility,Avg Unit Cost,Retail Price,Qty in Stock,Total Asset Value\n";
-                inventory.forEach(i => { 
-                    if(i.id === 'SERVICES_FEE_TRACKER') return;
-                    csv += `${escapeCSV(i.name)},${escapeCSV(i.oldParts||'')},${escapeCSV(i.compat)},${i.cost},${i.retail},${i.qty},${i.cost * (i.qty > 0 ? i.qty : 0)}\n`; 
-                });
+                inventory.forEach(i => { if(i.id !== 'SERVICES_FEE_TRACKER') csv += `${escapeCSV(i.name)},${escapeCSV(i.oldParts||'')},${escapeCSV(i.compat)},${i.cost},${i.retail},${i.qty},${i.cost * (i.qty > 0 ? i.qty : 0)}\n`; });
                 triggerCSVDownload(csv, `Inventory_${today}.csv`);
             } else if (type === 'sales_ledger') {
-                csv = "Date,Invoice Number,Customer Name,Items Sold,Total Invoice Value\n";
-                salesLedger.forEach(s => { csv += `${s.date},${s.invNum},${escapeCSV(s.customer)},${escapeCSV(s.itemsStr)},${s.total}\n`; });
+                csv = "Date,Invoice Number,Customer Name,Items Sold,Status,Total Invoice Value\n";
+                salesLedger.forEach(s => { let items = s.items ? s.items.map(i=>i.name).join(' | ') : s.itemsStr; csv += `${s.date},${s.invNum},${escapeCSV(s.customer)},${escapeCSV(items)},${s.status||'Paid'},${s.total}\n`; });
                 triggerCSVDownload(csv, `Sales_Ledger_${today}.csv`);
             } else if (type === 'sales_item') {
                 csv = "Model Name,Total Units Sold,Gross Revenue,Total COGS,Net Profit\n";
@@ -853,47 +770,60 @@
                 triggerCSVDownload(csv, `Sales_Per_Item_${today}.csv`);
             }
         }
+        function downloadBackup() { const a = document.createElement('a'); a.setAttribute("href", "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ inventory: inventory, salesLedger: salesLedger }))); a.setAttribute("download", `ECU_Backup.json`); document.body.appendChild(a); a.click(); a.remove(); }
+        function restoreBackup(event) {
+            if(!isAdmin) return; const file = event.target.files[0]; if (!file) return; const reader = new FileReader();
+            reader.onload = async function(e) { try { const data = JSON.parse(e.target.result); if (data.inventory && data.salesLedger) { inventory = data.inventory; salesLedger = data.salesLedger; await saveData(); updateInventoryUI(); updateReports(); alert("Restored!"); } } catch(err){} document.getElementById('backupFileInput').value = ''; }; reader.readAsText(file);
+        }
 
         // ================= REPORTS LOGIC =================
         function updateReports() {
-            let assetValue = 0, totalRev = 0, totalCogs = 0, totalProfit = 0, totalUnits = 0;
+            let assetValue = 0, totalRev = 0, totalCogs = 0, totalProfit = 0, totalUnits = 0, totalDiscounts = 0;
             let chartLabels = [], chartData = [];
             const itemSalesBody = document.getElementById('itemSalesBody'); itemSalesBody.innerHTML = '';
 
             inventory.forEach(i => {
-                if(i.id !== 'SERVICES_FEE_TRACKER') {
-                    assetValue += (i.cost * (i.qty > 0 ? i.qty : 0)); 
-                    totalUnits += (i.soldQty || 0); 
-                }
-                
-                totalRev += (i.revenue || 0);
-                totalCogs += (i.cogs || 0); 
-                totalProfit += (i.profit || 0);
-                
+                if(i.id !== 'SERVICES_FEE_TRACKER') { assetValue += (i.cost * (i.qty > 0 ? i.qty : 0)); totalUnits += (i.soldQty || 0); }
+                totalRev += (i.revenue || 0); totalCogs += (i.cogs || 0); totalProfit += (i.profit || 0);
                 if(i.revenue > 0) { chartLabels.push(i.name); chartData.push(i.revenue); }
                 if((i.soldQty || 0) > 0) itemSalesBody.innerHTML += `<tr><td><strong>${i.name}</strong></td><td>${i.soldQty}</td><td style="color:var(--primary);">${formatCur(i.revenue)}</td><td style="color:var(--danger);">${formatCur(i.cogs)}</td><td style="color:var(--success); font-weight:bold;">${formatCur(i.profit)}</td></tr>`;
             });
             if(itemSalesBody.innerHTML === '') itemSalesBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No items sold yet.</td></tr>';
             
-            document.getElementById('repAssetVal').innerText = formatCur(assetValue); document.getElementById('repTotalRev').innerText = formatCur(totalRev);
-            document.getElementById('repTotalSold').innerText = totalUnits; document.getElementById('repTotalProfit').innerText = formatCur(totalProfit);
-            document.getElementById('pnlRev').innerText = formatCur(totalRev); document.getElementById('pnlCogs').innerText = "-" + formatCur(totalCogs);
-            document.getElementById('pnlNet').innerText = formatCur(totalProfit);
+            // Calculate total discounts given from ledger
+            salesLedger.forEach(s => totalDiscounts += (s.discount || 0));
+            // Actual profit after discounts
+            let actualNet = totalProfit - totalDiscounts;
+            // Actual Rev after discounts
+            let actualRev = totalRev - totalDiscounts;
 
+            document.getElementById('repAssetVal').innerText = formatCur(assetValue); document.getElementById('repTotalRev').innerText = formatCur(actualRev);
+            document.getElementById('repTotalSold').innerText = totalUnits; document.getElementById('repTotalProfit').innerText = formatCur(actualNet);
+            document.getElementById('pnlRev').innerText = formatCur(totalRev); document.getElementById('pnlCogs').innerText = "-" + formatCur(totalCogs);
+            document.getElementById('pnlDiscounts').innerText = "-" + formatCur(totalDiscounts); document.getElementById('pnlNet').innerText = formatCur(actualNet);
+
+            // Populate Customer Balances (Debits)
+            const balancesBody = document.getElementById('repBalancesBody'); balancesBody.innerHTML = '';
+            let customerBalances = {};
+            salesLedger.forEach(s => { if(s.status === 'Unpaid') customerBalances[s.customer] = (customerBalances[s.customer]||0) + s.total; });
+            for(const [cust, amt] of Object.entries(customerBalances)) { balancesBody.innerHTML += `<tr><td><strong>${cust}</strong></td><td style="color:var(--danger); font-weight:bold;">${formatCur(amt)}</td></tr>`; }
+            if(balancesBody.innerHTML === '') balancesBody.innerHTML = '<tr><td colspan="2" style="text-align:center;">All accounts settled.</td></tr>';
+
+            // Populate Ledger
             const ledgerBody = document.getElementById('salesLedgerBody'); ledgerBody.innerHTML = '';
             [...salesLedger].sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(sale => {
-                ledgerBody.innerHTML += `<tr><td>${sale.date}</td><td><strong>${sale.invNum}</strong></td><td>${sale.customer}</td><td style="font-size:12px;">${sale.itemsStr}</td><td style="color:var(--primary); font-weight:bold;">${formatCur(sale.total)}</td></tr>`;
+                let statBadge = sale.status === 'Unpaid' ? `<span class="badge badge-danger">Unpaid</span>` : `<span class="badge badge-success">Paid</span>`;
+                let markPaidBtn = (sale.status === 'Unpaid' && isAdmin) ? `<button class="btn btn-success btn-sm" onclick="markAsPaid('${sale.invNum}')" style="margin-left:5px;" title="Mark Paid"><i class="fas fa-check"></i></button>` : '';
+                ledgerBody.innerHTML += `<tr><td>${sale.date}</td><td><strong>${sale.invNum}</strong></td><td>${sale.customer}</td><td>${statBadge}</td><td style="color:var(--primary); font-weight:bold;">${formatCur(sale.total)}</td><td><button class="btn btn-warning btn-sm" style="background:var(--primary);" onclick="reprintInvoice('${sale.invNum}')"><i class="fas fa-print"></i></button>${markPaidBtn}</td></tr>`;
             });
-            if(ledgerBody.innerHTML === '') ledgerBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No invoices generated yet.</td></tr>';
+            if(ledgerBody.innerHTML === '') ledgerBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No invoices generated yet.</td></tr>';
 
             const movingTbody = document.getElementById('repMovingBody'); movingTbody.innerHTML = '';
-            [...inventory].sort((a,b) => (b.profit || 0) - (a.profit || 0)).slice(0, 5).forEach(i => { 
-                if((i.soldQty || 0) > 0) movingTbody.innerHTML += `<tr><td><strong>${i.name}</strong></td><td>${i.soldQty}</td><td style="color:var(--success);">${formatCur(i.profit)}</td></tr>`; 
-            });
+            [...inventory].sort((a,b) => (b.profit || 0) - (a.profit || 0)).slice(0, 5).forEach(i => { if((i.soldQty || 0) > 0 && i.id !== 'SERVICES_FEE_TRACKER') movingTbody.innerHTML += `<tr><td><strong>${i.name}</strong></td><td>${i.soldQty}</td><td style="color:var(--success);">${formatCur(i.profit)}</td></tr>`; });
 
             const ctx = document.getElementById('revenuePieChart');
             if(pieChartInstance) pieChartInstance.destroy(); 
-            if(chartLabels.length > 0) pieChartInstance = new Chart(ctx, { type: 'doughnut', data: { labels: chartLabels, datasets: [{ data: chartData, backgroundColor: ['#1e3a8a', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'], borderWidth: 1 }] }, options: { responsive: true, plugins: { legend: { position: 'right' } } } });
+            if(chartLabels.length > 0) pieChartInstance = new Chart(ctx, { type: 'doughnut', data: { labels: chartLabels, datasets: [{ data: chartData, backgroundColor: ['#1e3a8a', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'], borderWidth: 1 }] }, options: { responsive: true, plugins: { legend: { display: false } } } });
         }
     </script>
 </body>
