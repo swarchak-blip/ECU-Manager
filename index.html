@@ -13,12 +13,20 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
     <style>
+        /* =========================================
+           🎨 UI CUSTOMIZATION (CHANGE COLORS HERE) 
+           ========================================= */
         :root {
-            --primary: #1e3a8a; --primary-hover: #172554;
-            --success: #16a34a; --danger: #dc2626;
-            --warning: #f59e0b; --bg-color: #f8fafc;
-            --card-bg: #ffffff; --text-main: #0f172a;
-            --text-muted: #64748b; --border: #e2e8f0;
+            --primary: #1e3a8a;       /* Main Brand Color (Dark Blue) */
+            --primary-hover: #172554; /* Hover Color */
+            --success: #16a34a;       /* Green */
+            --danger: #dc2626;        /* Red */
+            --warning: #f59e0b;       /* Yellow/Orange */
+            --bg-color: #f8fafc;      /* App Background */
+            --card-bg: #ffffff;       /* Card Background */
+            --text-main: #0f172a;     /* Main Text */
+            --text-muted: #64748b;    /* Gray Text */
+            --border: #e2e8f0;        /* Borders */
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
@@ -114,7 +122,11 @@
 
     <!-- Navigation -->
     <nav class="navbar">
-        <div class="logo"><i class="fas fa-microchip"></i> ECU Manager Pro</div>
+        <div class="logo">
+            <!-- TO ADD A LOGO: Replace the <i> icon below with an image tag like this: -->
+            <!-- <img src="URL_TO_YOUR_IMAGE.png" style="height: 30px;"> -->
+            <i class="fas fa-microchip"></i> ECU Manager Pro
+        </div>
         <div class="nav-links">
             <button class="nav-btn active" onclick="switchTab('inventory')"><i class="fas fa-boxes"></i> Inventory</button>
             <button class="nav-btn" onclick="switchTab('invoicing')"><i class="fas fa-file-invoice-dollar"></i> Sales & Invoicing</button>
@@ -275,7 +287,6 @@
                     </div>
                 </div>
                 
-                <!-- New Customer Debits Card -->
                 <div class="card">
                     <div class="card-title"><span><i class="fas fa-users" style="color: var(--danger);"></i> Customer Balances (Unpaid)</span></div>
                     <div class="table-responsive" style="max-height: 200px;">
@@ -298,7 +309,7 @@
                     <div class="card-title"><span><i class="fas fa-file-invoice"></i> Overall Sales Ledger</span></div>
                     <div class="table-responsive">
                         <table>
-                            <thead><tr><th>Date</th><th>Invoice #</th><th>Customer</th><th>Status</th><th>Total Value</th><th>Action</th></tr></thead>
+                            <thead><tr><th>Date</th><th>Invoice #</th><th>Customer</th><th>Status</th><th>Total Value</th><th style="text-align:center;">Actions</th></tr></thead>
                             <tbody id="salesLedgerBody"></tbody>
                         </table>
                     </div>
@@ -327,6 +338,26 @@
             </div>
         </div>
 
+        <!-- Edit Invoice Modal -->
+        <div id="editInvoiceModal" class="modal">
+            <div class="modal-content" style="width: 400px;">
+                <span class="close-btn" onclick="document.getElementById('editInvoiceModal').style.display='none'">&times;</span>
+                <h3 style="margin-bottom: 20px; color: var(--primary);">Edit Invoice Details</h3>
+                <input type="hidden" id="editInvNum">
+                <div class="form-group"><label>Customer Name</label><input type="text" id="editInvCustomer"></div>
+                <div class="form-group"><label>Phone</label><input type="text" id="editInvPhone"></div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="editInvStatus">
+                        <option value="Paid">Paid (Cash)</option>
+                        <option value="Unpaid">Unpaid (Debit)</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Due Date</label><input type="date" id="editInvDueDate"></div>
+                <button class="btn btn-primary" onclick="saveInvoiceEdit()"><i class="fas fa-save"></i> Save Changes</button>
+            </div>
+        </div>
+
         <div id="historyModal" class="modal">
             <div class="modal-content">
                 <span class="close-btn" onclick="document.getElementById('historyModal').style.display='none'">&times;</span>
@@ -344,6 +375,8 @@
         <div id="invoice-document" class="print-doc">
             <div class="doc-header">
                 <div>
+                    <!-- TO ADD A LOGO ON PRINTED INVOICE: Uncomment below and add your image URL -->
+                    <!-- <img src="YOUR_LOGO_URL.png" style="height: 50px; margin-bottom: 10px;"> -->
                     <h1>ECU MANAGER PRO</h1>
                     <p>123 Generator Avenue, Power City, TX</p>
                 </div>
@@ -380,7 +413,6 @@
                 </div>
             </div>
             
-            <!-- Signature Section -->
             <div class="doc-signatures">
                 <div>Authorized Signature</div>
                 <div>Customer Signature</div>
@@ -432,7 +464,6 @@
             if (cost >= 0 && markup >= 0) document.getElementById('ecuRetail').value = (cost + (cost * (markup / 100))).toFixed(2);
         }
 
-        // Live draft updates
         document.getElementById('invFeeAmount').addEventListener('input', renderPendingInvoice);
         document.getElementById('invDiscount').addEventListener('input', renderPendingInvoice);
 
@@ -492,8 +523,6 @@
                 status.style.color = '#16a34a'; status.style.background = '#dcfce7';
 
                 updateInventoryUI(); updateReports(); populateInvoiceDropdown();
-                if (localInv.length > cloudInv.length) alert("DATA RESCUED from local memory! Please login and click Save to Cloud.");
-
             } catch (error) {
                 status.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Offline';
                 status.style.color = '#dc2626'; status.style.background = '#fee2e2';
@@ -514,9 +543,7 @@
             try {
                 await fetch(`${FIREBASE_URL}?auth=${authToken}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dbState) });
                 status.innerHTML = '<i class="fas fa-check-circle"></i> Saved to Cloud';
-            } catch (error) {
-                status.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Save Failed';
-            }
+            } catch (error) { status.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Save Failed'; }
         }
         document.addEventListener("DOMContentLoaded", () => loadDataFromFirebase());
 
@@ -551,7 +578,7 @@
                 if(!existing.compat.toLowerCase().includes(compat.toLowerCase())) existing.compat += ", " + compat; 
                 if(oldPartsInput && !(existing.oldParts||"").toLowerCase().includes(oldPartsInput.toLowerCase())) existing.oldParts = existing.oldParts ? existing.oldParts + ", " + oldPartsInput : oldPartsInput;
                 existing.history.push({ date: dateStr, type: 'Restock', qty: addedQty, price: addedCost, note: 'Added to existing stock' });
-                alert(`Merged with existing model. New Average Cost: ${formatCur(existing.cost)}`);
+                alert(`Merged. New Avg Cost: ${formatCur(existing.cost)}`);
             } else {
                 inventory.push({ id: Date.now().toString(), name: nameInput, oldParts: oldPartsInput, compat: compat, cost: addedCost, retail: newRetail, qty: addedQty, soldQty: 0, revenue: 0, cogs: 0, profit: 0, history: [{ date: dateStr, type: 'Initial Stock', qty: addedQty, price: addedCost }] });
                 alert('New ECU added successfully!');
@@ -615,6 +642,14 @@
             document.getElementById('historyModal').style.display = 'block';
         }
 
+        function downloadInventoryPDF() {
+            document.getElementById('docInvRepDate').innerText = new Date().toLocaleDateString();
+            const docBody = document.getElementById('docInventoryBody'); docBody.innerHTML = '';
+            inventory.forEach(item => { if(item.id !== 'SERVICES_FEE_TRACKER') docBody.innerHTML += `<tr><td style="padding:6px; border:1px solid #ccc;">${item.name}</td><td style="padding:6px; border:1px solid #ccc; text-align:center;">${item.qty}</td><td style="padding:6px; border:1px solid #ccc; text-align:right;">${formatCur(item.cost * (item.qty > 0 ? item.qty : 0))}</td></tr>`; });
+            const el = document.getElementById('inventory-document'); el.style.display = 'block';
+            html2pdf().set({ margin: 10, filename: `Inventory_Report.pdf`, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } }).from(el).save().then(() => el.style.display = 'none');
+        }
+
         // ================= INVOICING LOGIC =================
         function populateInvoiceDropdown() {
             const select = document.getElementById('invItemSelect'); select.innerHTML = '<option value="">-- Choose Item --</option>';
@@ -657,123 +692,101 @@
             const dueDate = document.getElementById('invDueDate').value;
             const discount = parseFloat(document.getElementById('invDiscount').value) || 0;
             
-            let subtotal = 0; let cogsTotal = 0;
-            const saleDate = new Date().toISOString().split('T')[0];
-            const saleTime = new Date().toLocaleString();
+            let subtotal = 0; const saleDate = new Date().toISOString().split('T')[0]; const saleTime = new Date().toLocaleString();
             let itemsToSave = [];
 
-            // Physical Items
             currentInvoice.forEach(invItem => {
                 let dbItem = inventory.find(i => i.id === invItem.id);
                 if(dbItem) {
                     dbItem.qty -= invItem.qty; dbItem.soldQty += invItem.qty; 
                     const lineRev = dbItem.retail * invItem.qty; const lineCogs = dbItem.cost * invItem.qty; 
                     dbItem.revenue += lineRev; dbItem.cogs += lineCogs; dbItem.profit += (lineRev - lineCogs);
-                    dbItem.history = dbItem.history || [];
-                    dbItem.history.push({ date: saleDate, type: 'Sale', qty: invItem.qty, price: invItem.retail, note: `Sold to: ${customerName}` });
+                    dbItem.history = dbItem.history || []; dbItem.history.push({ date: saleDate, type: 'Sale', qty: invItem.qty, price: invItem.retail, note: `Sold to: ${customerName}` });
                 }
                 const lineTotal = invItem.retail * invItem.qty; subtotal += lineTotal;
                 itemsToSave.push({ name: invItem.name, price: invItem.retail, qty: invItem.qty, total: lineTotal });
             });
 
-            // Services
-            let serviceName = "";
             if (feeAmount > 0) {
-                serviceName = document.getElementById('invFeeName').value.trim() || "Service / Inspection";
-                subtotal += feeAmount;
-                itemsToSave.push({ name: serviceName, price: feeAmount, qty: 1, total: feeAmount });
+                let serviceName = document.getElementById('invFeeName').value.trim() || "Service / Inspection";
+                subtotal += feeAmount; itemsToSave.push({ name: serviceName, price: feeAmount, qty: 1, total: feeAmount });
                 
-                let serviceTracker = inventory.find(i => i.id === 'SERVICES_FEE_TRACKER');
-                if (!serviceTracker) { serviceTracker = { id: 'SERVICES_FEE_TRACKER', name: 'Labor & Services', compat: 'N/A', cost: 0, retail: 0, qty: '-', soldQty: 0, revenue: 0, cogs: 0, profit: 0, history: [] }; inventory.push(serviceTracker); }
-                serviceTracker.soldQty += 1; serviceTracker.revenue += feeAmount; serviceTracker.profit += feeAmount;
-                serviceTracker.history.push({ date: saleDate, type: 'Sale', qty: 1, price: feeAmount, note: `Fee on ${invNum}` });
+                let sT = inventory.find(i => i.id === 'SERVICES_FEE_TRACKER');
+                if (!sT) { sT = { id: 'SERVICES_FEE_TRACKER', name: 'Labor & Services', compat: 'N/A', cost: 0, retail: 0, qty: '-', soldQty: 0, revenue: 0, cogs: 0, profit: 0, history: [] }; inventory.push(sT); }
+                sT.soldQty += 1; sT.revenue += feeAmount; sT.profit += feeAmount;
+                sT.history.push({ date: saleDate, type: 'Sale', qty: 1, price: feeAmount, note: `Fee on ${invNum}` });
             }
             
-            let grandTotal = subtotal - discount;
-
-            // Save Invoice Record
-            const invoiceRecord = { date: saleDate, time: saleTime, invNum: invNum, customer: customerName, phone: phone, paymentType: payType, dueDate: dueDate, items: itemsToSave, subtotal: subtotal, discount: discount, total: grandTotal, status: payType === 'Cash' ? 'Paid' : 'Unpaid' };
+            const invoiceRecord = { date: saleDate, time: saleTime, invNum: invNum, customer: customerName, phone: phone, paymentType: payType, dueDate: dueDate, items: itemsToSave, subtotal: subtotal, discount: discount, total: (subtotal - discount), status: payType === 'Cash' ? 'Paid' : 'Unpaid' };
             salesLedger.push(invoiceRecord);
 
-            await saveData(); updateInventoryUI();
-            
-            // Print
-            printInvoiceFromData(invoiceRecord);
+            await saveData(); updateInventoryUI(); printInvoiceFromData(invoiceRecord);
             
             setTimeout(() => { 
                 currentInvoice = []; document.getElementById('invFeeName').value = ''; document.getElementById('invFeeAmount').value = '0'; document.getElementById('invDiscount').value = '0'; renderPendingInvoice(); populateInvoiceDropdown(); 
             }, 1000);
         }
 
-        // ================= PRINTING / REPRINTING =================
-        function printInvoiceFromData(invoice) {
+        // ================= PRINTING & INVOICE MANAGEMENT =================
+        function populateInvoiceDoc(invoice) {
             document.getElementById('docInvNum').innerText = invoice.invNum;
             document.getElementById('docDate').innerText = invoice.time || invoice.date;
             document.getElementById('docCustomer').innerText = invoice.customer;
             document.getElementById('docPhone').innerText = invoice.phone || "N/A";
             document.getElementById('docPayType').innerText = invoice.paymentType || "Cash";
             
-            if(invoice.paymentType === 'Debit' && invoice.dueDate) {
-                document.getElementById('docDueDateWrapper').style.display = 'block';
-                document.getElementById('docDueDate').innerText = invoice.dueDate;
-            } else { document.getElementById('docDueDateWrapper').style.display = 'none'; }
+            if(invoice.paymentType === 'Debit' && invoice.dueDate) { document.getElementById('docDueDateWrapper').style.display = 'block'; document.getElementById('docDueDate').innerText = invoice.dueDate; } 
+            else document.getElementById('docDueDateWrapper').style.display = 'none';
             
             let docBody = '';
-            if(invoice.items) {
-                invoice.items.forEach(item => { docBody += `<tr><td style="padding:10px; border:1px solid #000;"><strong>${item.name}</strong></td><td style="padding:10px; border:1px solid #000; text-align:right;">${formatCur(item.price)}</td><td style="padding:10px; border:1px solid #000; text-align:center;">${item.qty}</td><td style="padding:10px; border:1px solid #000; text-align:right;">${formatCur(item.total)}</td></tr>`; });
-            } else {
-                // Legacy support for older invoices before the update
-                docBody += `<tr><td style="padding:10px; border:1px solid #000;" colspan="3"><strong>${invoice.itemsStr}</strong></td><td style="padding:10px; border:1px solid #000; text-align:right;">${formatCur(invoice.total)}</td></tr>`;
-            }
+            if(invoice.items) { invoice.items.forEach(item => docBody += `<tr><td style="padding:10px; border:1px solid #000;"><strong>${item.name}</strong></td><td style="padding:10px; border:1px solid #000; text-align:right;">${formatCur(item.price)}</td><td style="padding:10px; border:1px solid #000; text-align:center;">${item.qty}</td><td style="padding:10px; border:1px solid #000; text-align:right;">${formatCur(item.total)}</td></tr>`); } 
+            else docBody += `<tr><td style="padding:10px; border:1px solid #000;" colspan="3"><strong>${invoice.itemsStr}</strong></td><td style="padding:10px; border:1px solid #000; text-align:right;">${formatCur(invoice.total)}</td></tr>`;
 
             document.getElementById('docInvoiceBody').innerHTML = docBody;
             document.getElementById('docSubtotal').innerText = formatCur(invoice.subtotal || invoice.total);
             document.getElementById('docDiscount').innerText = `-${formatCur(invoice.discount || 0)}`;
             document.getElementById('docTotal').innerText = formatCur(invoice.total);
-            
-            document.body.classList.add('print-invoice'); window.print();
-            setTimeout(() => { document.body.classList.remove('print-invoice'); }, 500);
         }
 
-        function reprintInvoice(invNum) {
-            const invoice = salesLedger.find(s => s.invNum === invNum);
-            if(invoice) printInvoiceFromData(invoice);
+        function printInvoiceFromData(invoice) {
+            populateInvoiceDoc(invoice); document.body.classList.add('print-invoice'); window.print();
+            setTimeout(() => document.body.classList.remove('print-invoice'), 500);
+        }
+
+        function reprintInvoice(invNum) { const inv = salesLedger.find(s => s.invNum === invNum); if(inv) printInvoiceFromData(inv); }
+        function downloadInvoicePDF(invNum) {
+            const inv = salesLedger.find(s => s.invNum === invNum); if(!inv) return;
+            populateInvoiceDoc(inv); const el = document.getElementById('invoice-document'); el.style.display = 'block';
+            html2pdf().set({ margin: 10, filename: `Invoice_${invNum}.pdf`, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } }).from(el).save().then(() => el.style.display = 'none');
+        }
+
+        function openEditModal(invNum) {
+            if(!isAdmin) return alert("Admin login required to edit invoices.");
+            const inv = salesLedger.find(s => s.invNum === invNum); if(!inv) return;
+            document.getElementById('editInvNum').value = invNum;
+            document.getElementById('editInvCustomer').value = inv.customer;
+            document.getElementById('editInvPhone').value = inv.phone || "";
+            document.getElementById('editInvStatus').value = inv.status;
+            document.getElementById('editInvDueDate').value = inv.dueDate || "";
+            document.getElementById('editInvoiceModal').style.display = 'block';
+        }
+
+        async function saveInvoiceEdit() {
+            const invNum = document.getElementById('editInvNum').value;
+            const inv = salesLedger.find(s => s.invNum === invNum);
+            if(inv) {
+                inv.customer = document.getElementById('editInvCustomer').value;
+                inv.phone = document.getElementById('editInvPhone').value;
+                inv.status = document.getElementById('editInvStatus').value;
+                inv.paymentType = (inv.status === 'Paid') ? 'Cash' : 'Debit';
+                inv.dueDate = document.getElementById('editInvDueDate').value;
+                await saveData(); updateReports(); document.getElementById('editInvoiceModal').style.display = 'none';
+            }
         }
         
         async function markAsPaid(invNum) {
-            if(!isAdmin) return alert("Login required.");
-            const invoice = salesLedger.find(s => s.invNum === invNum);
-            if(invoice && confirm(`Mark invoice ${invNum} as Paid?`)) {
-                invoice.status = 'Paid'; invoice.paymentType = 'Cash';
-                await saveData(); updateReports();
-            }
-        }
-
-        // ================= EXPORTS =================
-        function triggerCSVDownload(csvContent, filename) {
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const a = document.createElement("a"); a.setAttribute("href", URL.createObjectURL(blob)); a.setAttribute("download", filename); document.body.appendChild(a); a.click(); a.remove();
-        }
-        function exportExcel(type) {
-            let csv = ""; let today = new Date().toISOString().split('T')[0];
-            if (type === 'inventory') {
-                csv = "Model Name,Old Parts,Compatibility,Avg Unit Cost,Retail Price,Qty in Stock,Total Asset Value\n";
-                inventory.forEach(i => { if(i.id !== 'SERVICES_FEE_TRACKER') csv += `${escapeCSV(i.name)},${escapeCSV(i.oldParts||'')},${escapeCSV(i.compat)},${i.cost},${i.retail},${i.qty},${i.cost * (i.qty > 0 ? i.qty : 0)}\n`; });
-                triggerCSVDownload(csv, `Inventory_${today}.csv`);
-            } else if (type === 'sales_ledger') {
-                csv = "Date,Invoice Number,Customer Name,Items Sold,Status,Total Invoice Value\n";
-                salesLedger.forEach(s => { let items = s.items ? s.items.map(i=>i.name).join(' | ') : s.itemsStr; csv += `${s.date},${s.invNum},${escapeCSV(s.customer)},${escapeCSV(items)},${s.status||'Paid'},${s.total}\n`; });
-                triggerCSVDownload(csv, `Sales_Ledger_${today}.csv`);
-            } else if (type === 'sales_item') {
-                csv = "Model Name,Total Units Sold,Gross Revenue,Total COGS,Net Profit\n";
-                inventory.forEach(i => { if(i.soldQty > 0) csv += `${escapeCSV(i.name)},${i.soldQty},${i.revenue},${i.cogs},${i.profit}\n`; });
-                triggerCSVDownload(csv, `Sales_Per_Item_${today}.csv`);
-            }
-        }
-        function downloadBackup() { const a = document.createElement('a'); a.setAttribute("href", "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ inventory: inventory, salesLedger: salesLedger }))); a.setAttribute("download", `ECU_Backup.json`); document.body.appendChild(a); a.click(); a.remove(); }
-        function restoreBackup(event) {
-            if(!isAdmin) return; const file = event.target.files[0]; if (!file) return; const reader = new FileReader();
-            reader.onload = async function(e) { try { const data = JSON.parse(e.target.result); if (data.inventory && data.salesLedger) { inventory = data.inventory; salesLedger = data.salesLedger; await saveData(); updateInventoryUI(); updateReports(); alert("Restored!"); } } catch(err){} document.getElementById('backupFileInput').value = ''; }; reader.readAsText(file);
+            if(!isAdmin) return; const inv = salesLedger.find(s => s.invNum === invNum);
+            if(inv && confirm(`Mark invoice ${invNum} as Paid?`)) { inv.status = 'Paid'; inv.paymentType = 'Cash'; await saveData(); updateReports(); }
         }
 
         // ================= REPORTS LOGIC =================
@@ -790,41 +803,52 @@
             });
             if(itemSalesBody.innerHTML === '') itemSalesBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No items sold yet.</td></tr>';
             
-            // Calculate total discounts given from ledger
             salesLedger.forEach(s => totalDiscounts += (s.discount || 0));
-            // Actual profit after discounts
-            let actualNet = totalProfit - totalDiscounts;
-            // Actual Rev after discounts
-            let actualRev = totalRev - totalDiscounts;
+            let actualNet = totalProfit - totalDiscounts; let actualRev = totalRev - totalDiscounts;
 
             document.getElementById('repAssetVal').innerText = formatCur(assetValue); document.getElementById('repTotalRev').innerText = formatCur(actualRev);
             document.getElementById('repTotalSold').innerText = totalUnits; document.getElementById('repTotalProfit').innerText = formatCur(actualNet);
             document.getElementById('pnlRev').innerText = formatCur(totalRev); document.getElementById('pnlCogs').innerText = "-" + formatCur(totalCogs);
             document.getElementById('pnlDiscounts').innerText = "-" + formatCur(totalDiscounts); document.getElementById('pnlNet').innerText = formatCur(actualNet);
 
-            // Populate Customer Balances (Debits)
-            const balancesBody = document.getElementById('repBalancesBody'); balancesBody.innerHTML = '';
-            let customerBalances = {};
+            const balancesBody = document.getElementById('repBalancesBody'); balancesBody.innerHTML = ''; let customerBalances = {};
             salesLedger.forEach(s => { if(s.status === 'Unpaid') customerBalances[s.customer] = (customerBalances[s.customer]||0) + s.total; });
-            for(const [cust, amt] of Object.entries(customerBalances)) { balancesBody.innerHTML += `<tr><td><strong>${cust}</strong></td><td style="color:var(--danger); font-weight:bold;">${formatCur(amt)}</td></tr>`; }
+            for(const [cust, amt] of Object.entries(customerBalances)) balancesBody.innerHTML += `<tr><td><strong>${cust}</strong></td><td style="color:var(--danger); font-weight:bold;">${formatCur(amt)}</td></tr>`;
             if(balancesBody.innerHTML === '') balancesBody.innerHTML = '<tr><td colspan="2" style="text-align:center;">All accounts settled.</td></tr>';
 
-            // Populate Ledger
             const ledgerBody = document.getElementById('salesLedgerBody'); ledgerBody.innerHTML = '';
             [...salesLedger].sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(sale => {
                 let statBadge = sale.status === 'Unpaid' ? `<span class="badge badge-danger">Unpaid</span>` : `<span class="badge badge-success">Paid</span>`;
-                let markPaidBtn = (sale.status === 'Unpaid' && isAdmin) ? `<button class="btn btn-success btn-sm" onclick="markAsPaid('${sale.invNum}')" style="margin-left:5px;" title="Mark Paid"><i class="fas fa-check"></i></button>` : '';
-                ledgerBody.innerHTML += `<tr><td>${sale.date}</td><td><strong>${sale.invNum}</strong></td><td>${sale.customer}</td><td>${statBadge}</td><td style="color:var(--primary); font-weight:bold;">${formatCur(sale.total)}</td><td><button class="btn btn-warning btn-sm" style="background:var(--primary);" onclick="reprintInvoice('${sale.invNum}')"><i class="fas fa-print"></i></button>${markPaidBtn}</td></tr>`;
+                let acts = `<div style="display:flex; gap:5px; justify-content:center;">`;
+                acts += `<button class="btn btn-warning btn-sm" style="background:#475569;" onclick="reprintInvoice('${sale.invNum}')" title="Print"><i class="fas fa-print"></i></button>`;
+                acts += `<button class="btn btn-danger btn-sm" onclick="downloadInvoicePDF('${sale.invNum}')" title="PDF"><i class="fas fa-file-pdf"></i></button>`;
+                if (isAdmin) {
+                    acts += `<button class="btn btn-primary btn-sm" onclick="openEditModal('${sale.invNum}')" title="Edit Info"><i class="fas fa-edit"></i></button>`;
+                    if(sale.status === 'Unpaid') acts += `<button class="btn btn-success btn-sm" onclick="markAsPaid('${sale.invNum}')" title="Mark Paid"><i class="fas fa-check"></i></button>`;
+                }
+                acts += `</div>`;
+                
+                ledgerBody.innerHTML += `<tr><td>${sale.date}</td><td><strong>${sale.invNum}</strong></td><td>${sale.customer}</td><td>${statBadge}</td><td style="color:var(--primary); font-weight:bold;">${formatCur(sale.total)}</td><td>${acts}</td></tr>`;
             });
             if(ledgerBody.innerHTML === '') ledgerBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No invoices generated yet.</td></tr>';
 
             const movingTbody = document.getElementById('repMovingBody'); movingTbody.innerHTML = '';
             [...inventory].sort((a,b) => (b.profit || 0) - (a.profit || 0)).slice(0, 5).forEach(i => { if((i.soldQty || 0) > 0 && i.id !== 'SERVICES_FEE_TRACKER') movingTbody.innerHTML += `<tr><td><strong>${i.name}</strong></td><td>${i.soldQty}</td><td style="color:var(--success);">${formatCur(i.profit)}</td></tr>`; });
 
-            const ctx = document.getElementById('revenuePieChart');
-            if(pieChartInstance) pieChartInstance.destroy(); 
+            const ctx = document.getElementById('revenuePieChart'); if(pieChartInstance) pieChartInstance.destroy(); 
             if(chartLabels.length > 0) pieChartInstance = new Chart(ctx, { type: 'doughnut', data: { labels: chartLabels, datasets: [{ data: chartData, backgroundColor: ['#1e3a8a', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'], borderWidth: 1 }] }, options: { responsive: true, plugins: { legend: { display: false } } } });
         }
+
+        // ================= EXPORTS & BACKUPS =================
+        function triggerCSVDownload(csvContent, filename) { const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }); const a = document.createElement("a"); a.setAttribute("href", URL.createObjectURL(blob)); a.setAttribute("download", filename); document.body.appendChild(a); a.click(); a.remove(); }
+        function exportExcel(type) {
+            let csv = ""; let today = new Date().toISOString().split('T')[0];
+            if (type === 'inventory') { csv = "Model Name,Old Parts,Compatibility,Avg Unit Cost,Retail Price,Qty in Stock,Total Asset Value\n"; inventory.forEach(i => { if(i.id !== 'SERVICES_FEE_TRACKER') csv += `${escapeCSV(i.name)},${escapeCSV(i.oldParts||'')},${escapeCSV(i.compat)},${i.cost},${i.retail},${i.qty},${i.cost * (i.qty > 0 ? i.qty : 0)}\n`; }); triggerCSVDownload(csv, `Inventory_${today}.csv`); } 
+            else if (type === 'sales_ledger') { csv = "Date,Invoice Number,Customer Name,Phone,Status,Total Invoice Value\n"; salesLedger.forEach(s => { csv += `${s.date},${s.invNum},${escapeCSV(s.customer)},${escapeCSV(s.phone||'')},${s.status||'Paid'},${s.total}\n`; }); triggerCSVDownload(csv, `Sales_Ledger_${today}.csv`); } 
+            else if (type === 'sales_item') { csv = "Model Name,Total Units Sold,Gross Revenue,Total COGS,Net Profit\n"; inventory.forEach(i => { if(i.soldQty > 0) csv += `${escapeCSV(i.name)},${i.soldQty},${i.revenue},${i.cogs},${i.profit}\n`; }); triggerCSVDownload(csv, `Sales_Per_Item_${today}.csv`); }
+        }
+        function downloadBackup() { const a = document.createElement('a'); a.setAttribute("href", "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ inventory: inventory, salesLedger: salesLedger }))); a.setAttribute("download", `ECU_Backup.json`); document.body.appendChild(a); a.click(); a.remove(); }
+        function restoreBackup(event) { if(!isAdmin) return; const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = async function(e) { try { const data = JSON.parse(e.target.result); if (data.inventory && data.salesLedger) { inventory = data.inventory; salesLedger = data.salesLedger; await saveData(); updateInventoryUI(); updateReports(); alert("Restored!"); } } catch(err){} document.getElementById('backupFileInput').value = ''; }; reader.readAsText(file); }
     </script>
 </body>
 </html>
