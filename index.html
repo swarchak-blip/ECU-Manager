@@ -7,6 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
+    <!-- External Libraries -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -36,8 +37,16 @@
         .splash-content { position: relative; z-index: 2; text-align: center; }
         .splash-logo { font-size: 50px; color: #3b82f6; margin-bottom: 20px; animation: pulse 2s infinite; }
         .splash-title { font-size: 32px; font-weight: 700; letter-spacing: 2px; margin-bottom: 10px; }
-        .splash-subtitle { font-size: 14px; color: #94a3b8; margin-bottom: 40px; }
+        .splash-subtitle { font-size: 14px; color: #94a3b8; margin-bottom: 20px; }
         .splash-spinner { border: 4px solid rgba(255,255,255,0.1); border-left-color: #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto; }
+        
+        #force-close-splash {
+            display: none; margin-top: 30px; padding: 10px 20px; background: #3b82f6; 
+            color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: 0.2s;
+        }
+        #force-close-splash:hover { background: #2563eb; }
+
         .splash-footer { position: absolute; bottom: 30px; font-size: 12px; color: #64748b; letter-spacing: 1px; text-transform: uppercase; z-index: 2; }
         .splash-footer span { color: #3b82f6; font-weight: 700; }
 
@@ -157,8 +166,14 @@
         <div class="splash-content">
             <div class="splash-logo"><i class="fas fa-microchip"></i></div>
             <div class="splash-title">ECU MANAGER PRO</div>
-            <div class="splash-subtitle">Connecting to Cloud Database...</div>
-            <div class="splash-spinner"></div>
+            <div class="splash-subtitle" id="splash-text">Connecting to Database...</div>
+            <div class="splash-spinner" id="splash-spinner"></div>
+            
+            <!-- FALLBACK BUTTON IN CASE INTERNET IS SLOW/BLOCKED -->
+            <button id="force-close-splash" onclick="document.getElementById('splash-screen').style.display='none'">
+                <i class="fas fa-exclamation-triangle"></i> Start in Offline Mode
+            </button>
+
         </div>
         <div class="splash-footer">
             Developed by <span>Eng. Samul</span>
@@ -479,30 +494,53 @@
 
     <!-- Application Logic -->
     <script>
+        // BULLETPROOF SPLASH SCREEN REMOVAL
+        // This runs instantly and guarantees you will never be stuck, even if internet dies.
+        setTimeout(() => {
+            const splash = document.getElementById('splash-screen');
+            if (splash) {
+                splash.style.opacity = '0';
+                setTimeout(() => splash.style.display = 'none', 600);
+            }
+        }, 2500);
+
+        // Fallback: If 4 seconds pass and it's still there (some phones pause JS), show a manual button
+        setTimeout(() => {
+            const forceBtn = document.getElementById('force-close-splash');
+            const spinnerText = document.getElementById('splash-text');
+            const spinner = document.getElementById('splash-spinner');
+            if(forceBtn) forceBtn.style.display = 'block';
+            if(spinnerText) spinnerText.innerText = "Connection is very slow...";
+            if(spinner) spinner.style.display = 'none';
+        }, 4000);
+
         const formatCur = (num) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num || 0);
         const escapeCSV = (str) => `"${String(str).replace(/"/g, '""')}"`;
 
         document.querySelector('.navbar img').onload = function() { document.getElementById('fallback-icon').style.display = 'none'; };
 
-        function hideSplashScreen() {
-            const splash = document.getElementById('splash-screen');
-            if (splash && splash.style.display !== 'none') {
-                splash.style.opacity = '0';
-                setTimeout(() => splash.style.display = 'none', 600);
-            }
-        }
-        window.addEventListener('load', () => { setTimeout(hideSplashScreen, 3000); });
-
-        // ================= FIREBASE SETUP =================
-        // REPLACE THESE TWO LINES WITH YOUR ACTUAL FIREBASE DETAILS
+        // ================= FIREBASE SETUP (WITH ERROR HANDLING) =================
         const firebaseConfig = {
             apiKey: "AIzaSyCYswjDisG6BByRalql4YwA-qv0TjLNNFY", 
             databaseURL: "https://ecu-manager-a5f4a-default-rtdb.firebaseio.com" 
         };
         
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const FIREBASE_URL = firebaseConfig.databaseURL + "/data.json";
+        let auth = null;
+        let FIREBASE_URL = "";
+
+        try {
+            // Ensure URL doesn't have a trailing slash before appending /data.json
+            const dbUrl = firebaseConfig.databaseURL.replace(/\/$/, '');
+            FIREBASE_URL = dbUrl + "/data.json";
+
+            // If the script failed to download from Google, this throws an error and goes to 'catch'
+            if (typeof firebase !== 'undefined') {
+                firebase.initializeApp(firebaseConfig);
+                auth = firebase.auth();
+            }
+        } catch (error) {
+            console.error("Firebase SDK blocked or failed to load. Running in Offline Mode.", error);
+        }
 
         let inventory = [];
         let salesLedger = []; 
@@ -529,59 +567,64 @@
         document.getElementById('invDiscount').addEventListener('input', renderPendingInvoice);
 
         // ================= AUTHENTICATION LOGIC =================
-        auth.onAuthStateChanged(async (user) => {
-            const authBtn = document.getElementById('authBtn');
-            const adminBtns = document.querySelectorAll('.admin-only-btn');
-            
-            if (user) {
-                authToken = await user.getIdToken(); 
-                isAdmin = true; 
-                authBtn.innerText = "Logout";
-                adminBtns.forEach(btn => {
-                    btn.disabled = false;
-                    if(btn.innerHTML.includes('Add Stock')) btn.innerHTML = '<i class="fas fa-save"></i> Save to Cloud';
-                    if(btn.innerHTML.includes('Add Item')) btn.innerHTML = '<i class="fas fa-plus"></i> Add Item';
-                    if(btn.innerHTML.includes('Generate Invoice')) btn.innerHTML = '<i class="fas fa-print"></i> Generate Invoice & Save';
-                    if(btn.innerHTML.includes('Restore')) btn.innerHTML = '<i class="fas fa-upload"></i> Restore';
-                });
-            } else {
-                authToken = null; 
-                isAdmin = false; 
-                authBtn.innerText = "Login (Admin)";
-                adminBtns.forEach(btn => {
-                    btn.disabled = true;
-                    if(btn.innerHTML.includes('Save to Cloud')) btn.innerHTML = '<i class="fas fa-lock"></i> Login to Add Stock';
-                    if(btn.innerHTML.includes('Add Item')) btn.innerHTML = '<i class="fas fa-lock"></i> Login to Build Invoice';
-                    if(btn.innerHTML.includes('Generate Invoice')) btn.innerHTML = '<i class="fas fa-lock"></i> Login to Generate';
-                    if(btn.innerHTML.includes('Restore')) btn.innerHTML = '<i class="fas fa-lock"></i> Login to Restore';
-                });
-            }
-            // CRITICAL: Fetch data again after checking auth state so it uses the token if available
+        if (auth) {
+            auth.onAuthStateChanged(async (user) => {
+                const authBtn = document.getElementById('authBtn');
+                const adminBtns = document.querySelectorAll('.admin-only-btn');
+                
+                if (user) {
+                    authToken = await user.getIdToken(); 
+                    isAdmin = true; 
+                    authBtn.innerText = "Logout";
+                    adminBtns.forEach(btn => {
+                        btn.disabled = false;
+                        if(btn.innerHTML.includes('Add Stock')) btn.innerHTML = '<i class="fas fa-save"></i> Save to Cloud';
+                        if(btn.innerHTML.includes('Add Item')) btn.innerHTML = '<i class="fas fa-plus"></i> Add Item';
+                        if(btn.innerHTML.includes('Generate Invoice')) btn.innerHTML = '<i class="fas fa-print"></i> Generate Invoice & Save';
+                        if(btn.innerHTML.includes('Restore')) btn.innerHTML = '<i class="fas fa-upload"></i> Restore';
+                    });
+                } else {
+                    authToken = null; 
+                    isAdmin = false; 
+                    authBtn.innerText = "Login (Admin)";
+                    adminBtns.forEach(btn => {
+                        btn.disabled = true;
+                        if(btn.innerHTML.includes('Save to Cloud')) btn.innerHTML = '<i class="fas fa-lock"></i> Login to Add Stock';
+                        if(btn.innerHTML.includes('Add Item')) btn.innerHTML = '<i class="fas fa-lock"></i> Login to Build Invoice';
+                        if(btn.innerHTML.includes('Generate Invoice')) btn.innerHTML = '<i class="fas fa-lock"></i> Login to Generate';
+                        if(btn.innerHTML.includes('Restore')) btn.innerHTML = '<i class="fas fa-lock"></i> Login to Restore';
+                    });
+                }
+                loadDataFromFirebase();
+            });
+        } else {
+            // If auth failed to load entirely, load the data straight away (Offline fallback)
             loadDataFromFirebase();
-        });
+        }
 
         function toggleAuthModal() {
+            if (!auth) return alert("System offline. Cannot log in right now.");
             if (isAdmin) auth.signOut().then(() => alert("Logged out successfully.")); 
             else document.getElementById('loginModal').style.display = 'block';
         }
         function loginAdmin() {
+            if (!auth) return alert("System offline. Cannot log in right now.");
             const e = document.getElementById('authEmail').value, p = document.getElementById('authPassword').value;
-            auth.signInWithEmailAndPassword(e, p).then(() => { document.getElementById('loginModal').style.display = 'none'; alert("Welcome Admin!"); }).catch(err => alert("Login Failed: " + err.message));
+            auth.signInWithEmailAndPassword(e, p)
+                .then(() => { document.getElementById('loginModal').style.display = 'none'; alert("Welcome Admin!"); })
+                .catch(err => alert("Login Failed: " + err.message));
         }
 
         async function loadDataFromFirebase() {
             const status = document.getElementById('cloudStatus');
             try {
-                // If the user is logged in, attach the token to bypass security rules
                 let fetchUrl = FIREBASE_URL;
-                if (authToken) {
-                    fetchUrl += `?auth=${authToken}`;
-                }
+                if (authToken) fetchUrl += `?auth=${authToken}`;
 
                 const response = await fetch(fetchUrl);
                 
                 if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
+                    throw new Error(`Database Access Denied or Missing. Check rules.`);
                 }
 
                 const data = await response.json();
@@ -599,12 +642,11 @@
                 status.style.color = '#16a34a'; status.style.background = '#dcfce7';
 
                 updateInventoryUI(); updateReports(); populateInvoiceDropdown();
-                hideSplashScreen();
                 
                 if (localInv.length > cloudInv.length) alert("DATA RESCUED from local memory! Please login and click 'Save to Cloud'.");
 
             } catch (error) {
-                console.error("Database fetch failed. Using Local Mode.", error);
+                console.warn("Could not sync with Cloud. Using Local Memory.", error);
                 status.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Local Mode';
                 status.style.color = '#dc2626'; status.style.background = '#fee2e2';
                 
@@ -612,7 +654,6 @@
                 salesLedger = JSON.parse(localStorage.getItem('ecuSales_backup')) || [];
                 
                 updateInventoryUI(); updateReports(); populateInvoiceDropdown();
-                hideSplashScreen();
             }
         }
 
@@ -630,6 +671,7 @@
                 status.innerHTML = '<i class="fas fa-check-circle"></i> Saved to Cloud';
             } catch (error) { 
                 status.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Save Failed'; 
+                alert("Failed to save to Cloud. Check internet connection and database rules.");
             }
         }
 
@@ -692,6 +734,8 @@
 
         function updateInventoryUI() {
             const tbody = document.getElementById('inventoryBody'); const dataList = document.getElementById('ecuList');
+            if(!tbody) return;
+            
             tbody.innerHTML = ''; dataList.innerHTML = ''; let outOfStockItems = [];
 
             if(inventory.length === 0 || (inventory.length === 1 && inventory[0].id === 'SERVICES_FEE_TRACKER')) return tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Your inventory is empty.</td></tr>';
@@ -738,7 +782,9 @@
 
         // ================= INVOICING LOGIC =================
         function populateInvoiceDropdown() {
-            const select = document.getElementById('invItemSelect'); select.innerHTML = '<option value="">-- Choose Item --</option>';
+            const select = document.getElementById('invItemSelect'); 
+            if(!select) return;
+            select.innerHTML = '<option value="">-- Choose Item --</option>';
             inventory.filter(i => i.qty > 0 && i.id !== 'SERVICES_FEE_TRACKER').forEach(item => select.innerHTML += `<option value="${item.id}">${item.name} (Stock: ${item.qty}) - ${formatCur(item.retail)}</option>`);
         }
 
@@ -906,7 +952,9 @@
         function updateReports() {
             let assetValue = 0, totalRev = 0, totalCogs = 0, totalProfit = 0, totalUnits = 0, totalDiscounts = 0;
             let chartLabels = [], chartData = [];
-            const itemSalesBody = document.getElementById('itemSalesBody'); itemSalesBody.innerHTML = '';
+            const itemSalesBody = document.getElementById('itemSalesBody'); 
+            if(!itemSalesBody) return;
+            itemSalesBody.innerHTML = '';
 
             inventory.forEach(i => {
                 if(i.id !== 'SERVICES_FEE_TRACKER') { assetValue += (i.cost * (i.qty > 0 ? i.qty : 0)); totalUnits += (i.soldQty || 0); }
@@ -922,4 +970,77 @@
             document.getElementById('repAssetVal').innerText = formatCur(assetValue); document.getElementById('repTotalRev').innerText = formatCur(actualRev);
             document.getElementById('repTotalSold').innerText = totalUnits; document.getElementById('repTotalProfit').innerText = formatCur(actualNet);
             document.getElementById('pnlRev').innerText = formatCur(totalRev); document.getElementById('pnlCogs').innerText = "-" + formatCur(totalCogs);
-            document.getElementById('pnlDiscounts').innerText 
+            document.getElementById('pnlDiscounts').innerText = "-" + formatCur(totalDiscounts); document.getElementById('pnlNet').innerText = formatCur(actualNet);
+
+            const balancesBody = document.getElementById('repBalancesBody'); balancesBody.innerHTML = ''; let customerBalances = {};
+            salesLedger.forEach(s => { if(s.status === 'Unpaid') customerBalances[s.customer] = (customerBalances[s.customer]||0) + s.total; });
+            for(const [cust, amt] of Object.entries(customerBalances)) balancesBody.innerHTML += `<tr><td><strong>${cust}</strong></td><td style="color:var(--danger); font-weight:bold;">${formatCur(amt)}</td></tr>`;
+            if(balancesBody.innerHTML === '') balancesBody.innerHTML = '<tr><td colspan="2" style="text-align:center;">All accounts settled.</td></tr>';
+
+            const ledgerBody = document.getElementById('salesLedgerBody'); ledgerBody.innerHTML = '';
+            [...salesLedger].sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(sale => {
+                let statBadge = sale.status === 'Unpaid' ? `<span class="badge badge-danger">Unpaid</span>` : `<span class="badge badge-success">Paid</span>`;
+                let acts = `<div style="display:flex; gap:5px; justify-content:center;">`;
+                acts += `<button class="btn btn-warning btn-sm" style="background:#475569;" onclick="reprintInvoice('${sale.invNum}')" title="Print"><i class="fas fa-print"></i></button>`;
+                acts += `<button class="btn btn-danger btn-sm" onclick="downloadInvoicePDF('${sale.invNum}')" title="PDF"><i class="fas fa-file-pdf"></i></button>`;
+                if (isAdmin) {
+                    acts += `<button class="btn btn-primary btn-sm" onclick="openEditModal('${sale.invNum}')" title="Edit Info"><i class="fas fa-edit"></i></button>`;
+                    if(sale.status === 'Unpaid') acts += `<button class="btn btn-success btn-sm" onclick="markAsPaid('${sale.invNum}')" title="Mark Paid"><i class="fas fa-check"></i></button>`;
+                }
+                acts += `</div>`;
+                
+                ledgerBody.innerHTML += `<tr><td>${sale.date}</td><td><strong>${sale.invNum}</strong></td><td>${sale.customer}</td><td>${statBadge}</td><td style="color:var(--primary); font-weight:bold;">${formatCur(sale.total)}</td><td>${acts}</td></tr>`;
+            });
+            if(ledgerBody.innerHTML === '') ledgerBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No invoices generated yet.</td></tr>';
+
+            const movingTbody = document.getElementById('repMovingBody'); movingTbody.innerHTML = '';
+            [...inventory].sort((a,b) => (b.profit || 0) - (a.profit || 0)).slice(0, 5).forEach(i => { if((i.soldQty || 0) > 0 && i.id !== 'SERVICES_FEE_TRACKER') movingTbody.innerHTML += `<tr><td><strong>${i.name}</strong></td><td>${i.soldQty}</td><td style="color:var(--success);">${formatCur(i.profit)}</td></tr>`; });
+
+            // Store data for the chart toggle feature
+            currentChartLabels = chartLabels;
+            currentChartData = chartData;
+            
+            if (document.getElementById('revenueChart')) {
+                renderChart();
+            }
+        }
+
+        // ADDED FEATURE: Render chart with dropdown type selection
+        function renderChart() {
+            // Wait for Chart.js to load fully if it hasn't yet (slow internet bypass)
+            if (typeof Chart === 'undefined') {
+                setTimeout(renderChart, 500);
+                return;
+            }
+
+            const ctx = document.getElementById('revenueChart');
+            if (!ctx) return;
+            const type = document.getElementById('chartTypeSelector').value || 'doughnut';
+            
+            if (pieChartInstance) {
+                pieChartInstance.destroy();
+            }
+            
+            if (currentChartLabels.length > 0) {
+                pieChartInstance = new Chart(ctx, {
+                    type: type,
+                    data: {
+                        labels: currentChartLabels,
+                        datasets: [{
+                            label: 'Gross Revenue ($)',
+                            data: currentChartData,
+                            backgroundColor: ['#1e3a8a', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { display: type === 'doughnut' } },
+                        scales: type === 'bar' ? { y: { beginAtZero: true } } : {}
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html>
