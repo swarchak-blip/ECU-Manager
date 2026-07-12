@@ -168,7 +168,7 @@
     <!-- Navigation -->
     <nav class="navbar">
         <div class="logo">
-            <img src="https://i.imgur.com/vHq4R8x.png" onerror="this.style.display='none'" style="height: 30px;">
+            <img src="https://i.imgur.com/5vRDO0F.png" onerror="this.style.display='none'" style="height: 30px;">
             <i class="fas fa-microchip" id="fallback-icon"></i> ECU Manager Pro
         </div>
         <div class="nav-links">
@@ -331,18 +331,18 @@
                     </div>
                 </div>
 
-                <!-- ADDED FEATURE: CHART TOGGLE -->
+                <!-- ADDED CHART TOGGLE CARD -->
                 <div class="card">
                     <div class="card-title">
-                        <span><i class="fas fa-chart-bar" style="color: var(--primary);"></i> Revenue Breakdown</span>
+                        <span><i class="fas fa-chart-pie" style="color: var(--primary);"></i> Revenue Breakdown</span>
                         <select id="chartTypeSelector" onchange="renderChart()" style="padding: 4px; font-size: 12px; border-radius: 4px; border: 1px solid var(--border); outline: none;">
                             <option value="doughnut">Pie Chart</option>
                             <option value="bar">Bar Chart</option>
                         </select>
                     </div>
+                    <!-- THIS CANVAS ID IS CRITICAL to prevent the crash -->
                     <canvas id="revenueChart" style="max-height: 220px;"></canvas>
                 </div>
-                <!-- END OF ADDED FEATURE -->
                 
                 <div class="card">
                     <div class="card-title"><span><i class="fas fa-users" style="color: var(--danger);"></i> Customer Balances (Unpaid)</span></div>
@@ -487,8 +487,20 @@
         // Hide fallback icon if image loads successfully
         document.querySelector('.navbar img').onload = function() { document.getElementById('fallback-icon').style.display = 'none'; };
 
+        // ================= CLOUD SYNC & SPLASH SCREEN LOGIC =================
+        function hideSplashScreen() {
+            const splash = document.getElementById('splash-screen');
+            if (splash && splash.style.display !== 'none') {
+                splash.style.opacity = '0';
+                setTimeout(() => splash.style.display = 'none', 600);
+            }
+        }
+
+        // Failsafe: Hide splash screen automatically after 3 seconds to prevent getting stuck
+        window.addEventListener('load', () => { setTimeout(hideSplashScreen, 3000); });
+
         // ================= FIREBASE SETUP =================
-        // WARNING: Replace YOUR_API_KEY_HERE before publishing!
+        // WARNING: PASTE YOUR REAL API KEY BELOW
         const firebaseConfig = {
             apiKey: "AIzaSyCYswjDisG6BByRalql4YwA-qv0TjLNNFY", 
             databaseURL: "https://ecu-manager-a5f4a-default-rtdb.firebaseio.com"
@@ -501,13 +513,14 @@
         let inventory = [];
         let salesLedger = []; 
         let currentInvoice = [];
-        let pieChartInstance = null;
-        let authToken = null;
-        let isAdmin = false;
         
         // Globals for chart toggle
+        let pieChartInstance = null;
         let currentChartLabels = [];
         let currentChartData = [];
+        
+        let authToken = null;
+        let isAdmin = false;
 
         document.getElementById('ecuDate').value = new Date().toISOString().split('T')[0];
 
@@ -557,15 +570,6 @@
         function loginAdmin() {
             const e = document.getElementById('authEmail').value, p = document.getElementById('authPassword').value;
             auth.signInWithEmailAndPassword(e, p).then(() => { document.getElementById('loginModal').style.display = 'none'; alert("Welcome Admin!"); }).catch(err => alert("Login Failed: " + err.message));
-        }
-
-        // ================= CLOUD SYNC & SPLASH SCREEN LOGIC =================
-        function hideSplashScreen() {
-            setTimeout(() => {
-                const splash = document.getElementById('splash-screen');
-                splash.style.opacity = '0';
-                setTimeout(() => splash.style.display = 'none', 600);
-            }, 1500); // Minimum 1.5s display for visual effect
         }
 
         async function loadDataFromFirebase() {
@@ -931,19 +935,25 @@
             const movingTbody = document.getElementById('repMovingBody'); movingTbody.innerHTML = '';
             [...inventory].sort((a,b) => (b.profit || 0) - (a.profit || 0)).slice(0, 5).forEach(i => { if((i.soldQty || 0) > 0 && i.id !== 'SERVICES_FEE_TRACKER') movingTbody.innerHTML += `<tr><td><strong>${i.name}</strong></td><td>${i.soldQty}</td><td style="color:var(--success);">${formatCur(i.profit)}</td></tr>`; });
 
-            // Store data for the chart toggle feature
+            // Ensure variables update with fresh data before rendering chart
             currentChartLabels = chartLabels;
             currentChartData = chartData;
-            renderChart();
+            
+            // Render the chart only if the canvas exists on the page
+            if (document.getElementById('revenueChart')) {
+                renderChart();
+            }
         }
 
-        // ADDED FEATURE: Function to render chart based on dropdown selection
+        // ADDED FEATURE: Render chart with dropdown type selection
         function renderChart() {
             const ctx = document.getElementById('revenueChart');
             if (!ctx) return;
-            const type = document.getElementById('chartTypeSelector').value;
+            const type = document.getElementById('chartTypeSelector').value || 'doughnut';
             
-            if (pieChartInstance) pieChartInstance.destroy();
+            if (pieChartInstance) {
+                pieChartInstance.destroy();
+            }
             
             if (currentChartLabels.length > 0) {
                 pieChartInstance = new Chart(ctx, {
