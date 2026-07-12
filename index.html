@@ -161,15 +161,14 @@
             <div class="splash-spinner"></div>
         </div>
         <div class="splash-footer">
-            Developed by <span>Eng. Samul</span>
+            Developed by <span>Eng. Saad Mohammed</span>
         </div>
     </div>
 
     <!-- Navigation -->
     <nav class="navbar">
         <div class="logo">
-            <!-- Navbar Logo (Direct link added here) -->
-            <img src="https://i.imgur.com/5vRDO0F.png" onerror="this.style.display='none'" style="height: 30px;">
+            <img src="https://i.imgur.com/vHq4R8x.png" onerror="this.style.display='none'" style="height: 30px;">
             <i class="fas fa-microchip" id="fallback-icon"></i> ECU Manager Pro
         </div>
         <div class="nav-links">
@@ -331,6 +330,19 @@
                         <div class="pnl-row total" style="color: var(--success);"><span>Net Profit:</span> <span id="pnlNet">$0.00</span></div>
                     </div>
                 </div>
+
+                <!-- ADDED FEATURE: CHART TOGGLE -->
+                <div class="card">
+                    <div class="card-title">
+                        <span><i class="fas fa-chart-bar" style="color: var(--primary);"></i> Revenue Breakdown</span>
+                        <select id="chartTypeSelector" onchange="renderChart()" style="padding: 4px; font-size: 12px; border-radius: 4px; border: 1px solid var(--border); outline: none;">
+                            <option value="doughnut">Pie Chart</option>
+                            <option value="bar">Bar Chart</option>
+                        </select>
+                    </div>
+                    <canvas id="revenueChart" style="max-height: 220px;"></canvas>
+                </div>
+                <!-- END OF ADDED FEATURE -->
                 
                 <div class="card">
                     <div class="card-title"><span><i class="fas fa-users" style="color: var(--danger);"></i> Customer Balances (Unpaid)</span></div>
@@ -340,14 +352,6 @@
                             <tbody id="repBalancesBody"></tbody>
                         </table>
                     </div>
-                </div>
-
-                <div class="card">
-                    <div class="card-title"><span><i class="fas fa-fire" style="color: #f59e0b;"></i> Top Moving ECUs</span></div>
-                    <table style="font-size: 13px;">
-                        <thead><tr><th>Model</th><th>Sold</th><th>Profit</th></tr></thead>
-                        <tbody id="repMovingBody"></tbody>
-                    </table>
                 </div>
 
                 <div class="card full-width-card">
@@ -421,7 +425,7 @@
             <div class="doc-header">
                 <div>
                     <!-- Invoice Logo (Direct link added here) -->
-                    <img src="https://i.imgur.com/5vRDO0F.png" onerror="this.style.display='none'" style="height: 50px; margin-bottom: 10px;">
+                    <img src="https://i.imgur.com/vHq4R8x.png" onerror="this.style.display='none'" style="height: 50px; margin-bottom: 10px;">
                     <h1>ECU MANAGER PRO</h1>
                     <p>123 Generator Avenue, Power City, TX</p>
                 </div>
@@ -500,6 +504,10 @@
         let pieChartInstance = null;
         let authToken = null;
         let isAdmin = false;
+        
+        // Globals for chart toggle
+        let currentChartLabels = [];
+        let currentChartData = [];
 
         document.getElementById('ecuDate').value = new Date().toISOString().split('T')[0];
 
@@ -923,8 +931,39 @@
             const movingTbody = document.getElementById('repMovingBody'); movingTbody.innerHTML = '';
             [...inventory].sort((a,b) => (b.profit || 0) - (a.profit || 0)).slice(0, 5).forEach(i => { if((i.soldQty || 0) > 0 && i.id !== 'SERVICES_FEE_TRACKER') movingTbody.innerHTML += `<tr><td><strong>${i.name}</strong></td><td>${i.soldQty}</td><td style="color:var(--success);">${formatCur(i.profit)}</td></tr>`; });
 
-            const ctx = document.getElementById('revenuePieChart'); if(pieChartInstance) pieChartInstance.destroy(); 
-            if(chartLabels.length > 0) pieChartInstance = new Chart(ctx, { type: 'doughnut', data: { labels: chartLabels, datasets: [{ data: chartData, backgroundColor: ['#1e3a8a', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'], borderWidth: 1 }] }, options: { responsive: true, plugins: { legend: { display: false } } } });
+            // Store data for the chart toggle feature
+            currentChartLabels = chartLabels;
+            currentChartData = chartData;
+            renderChart();
+        }
+
+        // ADDED FEATURE: Function to render chart based on dropdown selection
+        function renderChart() {
+            const ctx = document.getElementById('revenueChart');
+            if (!ctx) return;
+            const type = document.getElementById('chartTypeSelector').value;
+            
+            if (pieChartInstance) pieChartInstance.destroy();
+            
+            if (currentChartLabels.length > 0) {
+                pieChartInstance = new Chart(ctx, {
+                    type: type,
+                    data: {
+                        labels: currentChartLabels,
+                        datasets: [{
+                            label: 'Gross Revenue ($)',
+                            data: currentChartData,
+                            backgroundColor: ['#1e3a8a', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { display: type === 'doughnut' } },
+                        scales: type === 'bar' ? { y: { beginAtZero: true } } : {}
+                    }
+                });
+            }
         }
     </script>
 </body>
