@@ -161,14 +161,14 @@
             <div class="splash-spinner"></div>
         </div>
         <div class="splash-footer">
-            Developed by <span>Eng. Saad Mohammed</span>
+            Developed by <span>Eng. Samul</span>
         </div>
     </div>
 
     <!-- Navigation -->
     <nav class="navbar">
         <div class="logo">
-            <img src="https://i.imgur.com/5vRDO0F.png" onerror="this.style.display='none'" style="height: 30px;">
+            <img src="https://i.imgur.com/vHq4R8x.png" onerror="this.style.display='none'" style="height: 30px;">
             <i class="fas fa-microchip" id="fallback-icon"></i> ECU Manager Pro
         </div>
         <div class="nav-links">
@@ -340,7 +340,6 @@
                             <option value="bar">Bar Chart</option>
                         </select>
                     </div>
-                    <!-- THIS CANVAS ID IS CRITICAL to prevent the crash -->
                     <canvas id="revenueChart" style="max-height: 220px;"></canvas>
                 </div>
                 
@@ -424,7 +423,6 @@
         <div id="invoice-document" class="print-doc">
             <div class="doc-header">
                 <div>
-                    <!-- Invoice Logo (Direct link added here) -->
                     <img src="https://i.imgur.com/vHq4R8x.png" onerror="this.style.display='none'" style="height: 50px; margin-bottom: 10px;">
                     <h1>ECU MANAGER PRO</h1>
                     <p>123 Generator Avenue, Power City, TX</p>
@@ -484,10 +482,8 @@
         const formatCur = (num) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num || 0);
         const escapeCSV = (str) => `"${String(str).replace(/"/g, '""')}"`;
 
-        // Hide fallback icon if image loads successfully
         document.querySelector('.navbar img').onload = function() { document.getElementById('fallback-icon').style.display = 'none'; };
 
-        // ================= CLOUD SYNC & SPLASH SCREEN LOGIC =================
         function hideSplashScreen() {
             const splash = document.getElementById('splash-screen');
             if (splash && splash.style.display !== 'none') {
@@ -495,15 +491,13 @@
                 setTimeout(() => splash.style.display = 'none', 600);
             }
         }
-
-        // Failsafe: Hide splash screen automatically after 3 seconds to prevent getting stuck
         window.addEventListener('load', () => { setTimeout(hideSplashScreen, 3000); });
 
         // ================= FIREBASE SETUP =================
-        // WARNING: PASTE YOUR REAL API KEY BELOW
+        // REPLACE THESE TWO LINES WITH YOUR ACTUAL FIREBASE DETAILS
         const firebaseConfig = {
             apiKey: "AIzaSyCYswjDisG6BByRalql4YwA-qv0TjLNNFY", 
-            databaseURL: "https://ecu-manager-a5f4a-default-rtdb.firebaseio.com"
+            databaseURL: "https://ecu-manager-a5f4a-default-rtdb.firebaseio.com" 
         };
         
         firebase.initializeApp(firebaseConfig);
@@ -514,7 +508,6 @@
         let salesLedger = []; 
         let currentInvoice = [];
         
-        // Globals for chart toggle
         let pieChartInstance = null;
         let currentChartLabels = [];
         let currentChartData = [];
@@ -524,7 +517,6 @@
 
         document.getElementById('ecuDate').value = new Date().toISOString().split('T')[0];
 
-        // Auto-calculate markup
         document.getElementById('ecuCost').addEventListener('input', calculateRetail);
         document.getElementById('ecuMarkup').addEventListener('input', calculateRetail);
         function calculateRetail() {
@@ -542,7 +534,9 @@
             const adminBtns = document.querySelectorAll('.admin-only-btn');
             
             if (user) {
-                authToken = await user.getIdToken(); isAdmin = true; authBtn.innerText = "Logout";
+                authToken = await user.getIdToken(); 
+                isAdmin = true; 
+                authBtn.innerText = "Logout";
                 adminBtns.forEach(btn => {
                     btn.disabled = false;
                     if(btn.innerHTML.includes('Add Stock')) btn.innerHTML = '<i class="fas fa-save"></i> Save to Cloud';
@@ -551,7 +545,9 @@
                     if(btn.innerHTML.includes('Restore')) btn.innerHTML = '<i class="fas fa-upload"></i> Restore';
                 });
             } else {
-                authToken = null; isAdmin = false; authBtn.innerText = "Login (Admin)";
+                authToken = null; 
+                isAdmin = false; 
+                authBtn.innerText = "Login (Admin)";
                 adminBtns.forEach(btn => {
                     btn.disabled = true;
                     if(btn.innerHTML.includes('Save to Cloud')) btn.innerHTML = '<i class="fas fa-lock"></i> Login to Add Stock';
@@ -560,7 +556,8 @@
                     if(btn.innerHTML.includes('Restore')) btn.innerHTML = '<i class="fas fa-lock"></i> Login to Restore';
                 });
             }
-            updateInventoryUI(); updateReports();
+            // CRITICAL: Fetch data again after checking auth state so it uses the token if available
+            loadDataFromFirebase();
         });
 
         function toggleAuthModal() {
@@ -575,14 +572,25 @@
         async function loadDataFromFirebase() {
             const status = document.getElementById('cloudStatus');
             try {
-                const response = await fetch(FIREBASE_URL);
+                // If the user is logged in, attach the token to bypass security rules
+                let fetchUrl = FIREBASE_URL;
+                if (authToken) {
+                    fetchUrl += `?auth=${authToken}`;
+                }
+
+                const response = await fetch(fetchUrl);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
                 const data = await response.json();
                 
                 let cloudInv = data ? (data.inventory || []) : [];
                 let cloudSales = data ? (data.salesLedger || []) : [];
                 
-                let localInv = JSON.parse(localStorage.getItem('ecuInventory')) || [];
-                let localSales = JSON.parse(localStorage.getItem('ecuSalesLedger')) || [];
+                let localInv = JSON.parse(localStorage.getItem('ecuInventory_backup')) || [];
+                let localSales = JSON.parse(localStorage.getItem('ecuSales_backup')) || [];
                 
                 inventory = (localInv.length > cloudInv.length) ? localInv : cloudInv;
                 salesLedger = (localSales.length > cloudSales.length) ? localSales : cloudSales;
@@ -593,14 +601,17 @@
                 updateInventoryUI(); updateReports(); populateInvoiceDropdown();
                 hideSplashScreen();
                 
-                if (localInv.length > cloudInv.length) alert("DATA RESCUED from local memory! Please login and click Save to Cloud.");
+                if (localInv.length > cloudInv.length) alert("DATA RESCUED from local memory! Please login and click 'Save to Cloud'.");
 
             } catch (error) {
-                status.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Offline';
+                console.error("Database fetch failed. Using Local Mode.", error);
+                status.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Local Mode';
                 status.style.color = '#dc2626'; status.style.background = '#fee2e2';
-                inventory = JSON.parse(localStorage.getItem('ecuInventory_backup')) || JSON.parse(localStorage.getItem('ecuInventory')) || [];
-                salesLedger = JSON.parse(localStorage.getItem('ecuSales_backup')) || JSON.parse(localStorage.getItem('ecuSalesLedger')) || [];
-                updateInventoryUI(); updateReports();
+                
+                inventory = JSON.parse(localStorage.getItem('ecuInventory_backup')) || [];
+                salesLedger = JSON.parse(localStorage.getItem('ecuSales_backup')) || [];
+                
+                updateInventoryUI(); updateReports(); populateInvoiceDropdown();
                 hideSplashScreen();
             }
         }
@@ -614,11 +625,13 @@
             localStorage.setItem('ecuSales_backup', JSON.stringify(salesLedger)); 
 
             try {
-                await fetch(`${FIREBASE_URL}?auth=${authToken}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dbState) });
+                const response = await fetch(`${FIREBASE_URL}?auth=${authToken}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dbState) });
+                if(!response.ok) throw new Error("Save Failed");
                 status.innerHTML = '<i class="fas fa-check-circle"></i> Saved to Cloud';
-            } catch (error) { status.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Save Failed'; }
+            } catch (error) { 
+                status.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Save Failed'; 
+            }
         }
-        document.addEventListener("DOMContentLoaded", () => loadDataFromFirebase());
 
         function switchTab(tabName) {
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
@@ -909,72 +922,4 @@
             document.getElementById('repAssetVal').innerText = formatCur(assetValue); document.getElementById('repTotalRev').innerText = formatCur(actualRev);
             document.getElementById('repTotalSold').innerText = totalUnits; document.getElementById('repTotalProfit').innerText = formatCur(actualNet);
             document.getElementById('pnlRev').innerText = formatCur(totalRev); document.getElementById('pnlCogs').innerText = "-" + formatCur(totalCogs);
-            document.getElementById('pnlDiscounts').innerText = "-" + formatCur(totalDiscounts); document.getElementById('pnlNet').innerText = formatCur(actualNet);
-
-            const balancesBody = document.getElementById('repBalancesBody'); balancesBody.innerHTML = ''; let customerBalances = {};
-            salesLedger.forEach(s => { if(s.status === 'Unpaid') customerBalances[s.customer] = (customerBalances[s.customer]||0) + s.total; });
-            for(const [cust, amt] of Object.entries(customerBalances)) balancesBody.innerHTML += `<tr><td><strong>${cust}</strong></td><td style="color:var(--danger); font-weight:bold;">${formatCur(amt)}</td></tr>`;
-            if(balancesBody.innerHTML === '') balancesBody.innerHTML = '<tr><td colspan="2" style="text-align:center;">All accounts settled.</td></tr>';
-
-            const ledgerBody = document.getElementById('salesLedgerBody'); ledgerBody.innerHTML = '';
-            [...salesLedger].sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(sale => {
-                let statBadge = sale.status === 'Unpaid' ? `<span class="badge badge-danger">Unpaid</span>` : `<span class="badge badge-success">Paid</span>`;
-                let acts = `<div style="display:flex; gap:5px; justify-content:center;">`;
-                acts += `<button class="btn btn-warning btn-sm" style="background:#475569;" onclick="reprintInvoice('${sale.invNum}')" title="Print"><i class="fas fa-print"></i></button>`;
-                acts += `<button class="btn btn-danger btn-sm" onclick="downloadInvoicePDF('${sale.invNum}')" title="PDF"><i class="fas fa-file-pdf"></i></button>`;
-                if (isAdmin) {
-                    acts += `<button class="btn btn-primary btn-sm" onclick="openEditModal('${sale.invNum}')" title="Edit Info"><i class="fas fa-edit"></i></button>`;
-                    if(sale.status === 'Unpaid') acts += `<button class="btn btn-success btn-sm" onclick="markAsPaid('${sale.invNum}')" title="Mark Paid"><i class="fas fa-check"></i></button>`;
-                }
-                acts += `</div>`;
-                
-                ledgerBody.innerHTML += `<tr><td>${sale.date}</td><td><strong>${sale.invNum}</strong></td><td>${sale.customer}</td><td>${statBadge}</td><td style="color:var(--primary); font-weight:bold;">${formatCur(sale.total)}</td><td>${acts}</td></tr>`;
-            });
-            if(ledgerBody.innerHTML === '') ledgerBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No invoices generated yet.</td></tr>';
-
-            const movingTbody = document.getElementById('repMovingBody'); movingTbody.innerHTML = '';
-            [...inventory].sort((a,b) => (b.profit || 0) - (a.profit || 0)).slice(0, 5).forEach(i => { if((i.soldQty || 0) > 0 && i.id !== 'SERVICES_FEE_TRACKER') movingTbody.innerHTML += `<tr><td><strong>${i.name}</strong></td><td>${i.soldQty}</td><td style="color:var(--success);">${formatCur(i.profit)}</td></tr>`; });
-
-            // Ensure variables update with fresh data before rendering chart
-            currentChartLabels = chartLabels;
-            currentChartData = chartData;
-            
-            // Render the chart only if the canvas exists on the page
-            if (document.getElementById('revenueChart')) {
-                renderChart();
-            }
-        }
-
-        // ADDED FEATURE: Render chart with dropdown type selection
-        function renderChart() {
-            const ctx = document.getElementById('revenueChart');
-            if (!ctx) return;
-            const type = document.getElementById('chartTypeSelector').value || 'doughnut';
-            
-            if (pieChartInstance) {
-                pieChartInstance.destroy();
-            }
-            
-            if (currentChartLabels.length > 0) {
-                pieChartInstance = new Chart(ctx, {
-                    type: type,
-                    data: {
-                        labels: currentChartLabels,
-                        datasets: [{
-                            label: 'Gross Revenue ($)',
-                            data: currentChartData,
-                            backgroundColor: ['#1e3a8a', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: { legend: { display: type === 'doughnut' } },
-                        scales: type === 'bar' ? { y: { beginAtZero: true } } : {}
-                    }
-                });
-            }
-        }
-    </script>
-</body>
-</html>
+            document.getElementById('pnlDiscounts').innerText 
