@@ -13,25 +13,50 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
     <style>
-        /* =========================================
-           🎨 UI CUSTOMIZATION (CHANGE COLORS HERE) 
-           ========================================= */
         :root {
-            --primary: #064e3b;       /* Main Brand Color (Dark Blue) */
-            --primary-hover: #172554; /* Hover Color */
-            --success: #16a34a;       /* Green */
-            --danger: #dc2626;        /* Red */
-            --warning: #f59e0b;       /* Yellow/Orange */
-            --bg-color: #f8fafc;      /* App Background */
-            --card-bg: #ffffff;       /* Card Background */
-            --text-main: #0f172a;     /* Main Text */
-            --text-muted: #64748b;    /* Gray Text */
-            --border: #e2e8f0;        /* Borders */
+            --primary: #1e3a8a; --primary-hover: #172554;
+            --success: #16a34a; --danger: #dc2626;
+            --warning: #f59e0b; --bg-color: #f8fafc;
+            --card-bg: #ffffff; --text-main: #0f172a;
+            --text-muted: #64748b; --border: #e2e8f0;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-        body { background-color: var(--bg-color); color: var(--text-main); }
+        body { background-color: var(--bg-color); color: var(--text-main); overflow-x: hidden; }
 
+        /* =========================================
+           🚀 SPLASH LOADING SCREEN
+           ========================================= */
+        #splash-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #0f172a; z-index: 9999; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; color: white;
+            transition: opacity 0.6s ease-out; overflow: hidden;
+        }
+        .splash-content { position: relative; z-index: 2; text-align: center; }
+        .splash-logo { font-size: 50px; color: #3b82f6; margin-bottom: 20px; animation: pulse 2s infinite; }
+        .splash-title { font-size: 32px; font-weight: 700; letter-spacing: 2px; margin-bottom: 10px; }
+        .splash-subtitle { font-size: 14px; color: #94a3b8; margin-bottom: 40px; }
+        .splash-spinner { border: 4px solid rgba(255,255,255,0.1); border-left-color: #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto; }
+        .splash-footer { position: absolute; bottom: 30px; font-size: 12px; color: #64748b; letter-spacing: 1px; text-transform: uppercase; z-index: 2; }
+        .splash-footer span { color: #3b82f6; font-weight: 700; }
+
+        /* Floating ECUs Background Animation */
+        .bg-ecus { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+        .floating-ecu { position: absolute; color: rgba(59, 130, 246, 0.05); font-size: 100px; animation: floatUp linear infinite; bottom: -120px; }
+        .ecu-1 { left: 10%; animation-duration: 12s; animation-delay: 0s; font-size: 80px; }
+        .ecu-2 { left: 30%; animation-duration: 15s; animation-delay: 2s; font-size: 120px; }
+        .ecu-3 { left: 50%; animation-duration: 10s; animation-delay: 4s; font-size: 60px; }
+        .ecu-4 { left: 70%; animation-duration: 18s; animation-delay: 1s; font-size: 90px; }
+        .ecu-5 { left: 85%; animation-duration: 14s; animation-delay: 3s; font-size: 150px; }
+
+        @keyframes pulse { 0% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(59,130,246,0.4)); } 50% { transform: scale(1.05); filter: drop-shadow(0 0 20px rgba(59,130,246,0.6)); } 100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(59,130,246,0)); } }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes floatUp { 0% { transform: translateY(0) rotate(0deg); opacity: 1; } 100% { transform: translateY(-120vh) rotate(360deg); opacity: 0; } }
+
+        /* =========================================
+           APP UI STYLES
+           ========================================= */
         .navbar { background: var(--card-bg); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         .logo { display: flex; align-items: center; gap: 10px; font-size: 20px; font-weight: 700; color: var(--primary); }
         .nav-links { display: flex; gap: 15px; align-items: center; }
@@ -45,8 +70,8 @@
 
         .container { max-width: 1300px; margin: 20px auto; padding: 0 20px; }
         .view-section { display: none; }
-        .view-section.active { display: block; animation: fadeIn 0.3s; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .view-section.active { display: block; animation: fadeInUI 0.3s; }
+        @keyframes fadeInUI { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
         .alert { background: #fef2f2; border: 1px solid #fecaca; border-left: 4px solid var(--danger); color: var(--danger); padding: 15px; margin-bottom: 20px; border-radius: 6px; font-size: 14px; cursor: pointer; }
         .alert-header { display: flex; justify-content: space-between; align-items: center; }
@@ -112,7 +137,7 @@
         
         @media print {
             @page { margin: 10mm; size: A4; }
-            body { background: white; padding: 0; }
+            body { background: white; padding: 0; overflow: auto; }
             .navbar, .container > *:not(.print-doc) { display: none !important; }
             body.print-invoice #invoice-document { display: block !important; border: none; }
         }
@@ -120,18 +145,38 @@
 </head>
 <body>
 
+    <!-- ================= SPLASH SCREEN ================= -->
+    <div id="splash-screen">
+        <div class="bg-ecus">
+            <i class="fas fa-microchip floating-ecu ecu-1"></i>
+            <i class="fas fa-microchip floating-ecu ecu-2"></i>
+            <i class="fas fa-microchip floating-ecu ecu-3"></i>
+            <i class="fas fa-microchip floating-ecu ecu-4"></i>
+            <i class="fas fa-microchip floating-ecu ecu-5"></i>
+        </div>
+        <div class="splash-content">
+            <div class="splash-logo"><i class="fas fa-microchip"></i></div>
+            <div class="splash-title">ECU MANAGER PRO</div>
+            <div class="splash-subtitle">Connecting to Cloud Database...</div>
+            <div class="splash-spinner"></div>
+        </div>
+        <div class="splash-footer">
+            Developed by <span>Eng. Samul</span>
+        </div>
+    </div>
+
     <!-- Navigation -->
     <nav class="navbar">
         <div class="logo">
-            <!-- TO ADD A LOGO: Replace the <i> icon below with an image tag like this: -->
-             <img src="https://imgur.com/a/wpCJl3d" style="height: 30px;"> 
-            <i class="fas fa-microchip"></i> ECU Manager Pro
+            <!-- Navbar Logo (Direct link added here) -->
+            <img src="https://i.imgur.com/5vRDO0F.png" onerror="this.style.display='none'" style="height: 30px;">
+            <i class="fas fa-microchip" id="fallback-icon"></i> ECU Manager Pro
         </div>
         <div class="nav-links">
             <button class="nav-btn active" onclick="switchTab('inventory')"><i class="fas fa-boxes"></i> Inventory</button>
             <button class="nav-btn" onclick="switchTab('invoicing')"><i class="fas fa-file-invoice-dollar"></i> Sales & Invoicing</button>
             <button class="nav-btn" onclick="switchTab('reports')"><i class="fas fa-chart-pie"></i> Financial Reports</button>
-            <span id="cloudStatus"><i class="fas fa-cloud"></i> Loading...</span>
+            <span id="cloudStatus"><i class="fas fa-cloud"></i> Syncing...</span>
             <button id="authBtn" onclick="toggleAuthModal()">Login (Admin)</button>
         </div>
     </nav>
@@ -375,8 +420,8 @@
         <div id="invoice-document" class="print-doc">
             <div class="doc-header">
                 <div>
-                    <!-- TO ADD A LOGO ON PRINTED INVOICE: Uncomment below and add your image URL -->
-                    <!-- <img src="YOUR_LOGO_URL.png" style="height: 50px; margin-bottom: 10px;"> -->
+                    <!-- Invoice Logo (Direct link added here) -->
+                    <img src="https://i.imgur.com/5vRDO0F.png" onerror="this.style.display='none'" style="height: 50px; margin-bottom: 10px;">
                     <h1>ECU MANAGER PRO</h1>
                     <p>123 Generator Avenue, Power City, TX</p>
                 </div>
@@ -434,6 +479,9 @@
     <script>
         const formatCur = (num) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num || 0);
         const escapeCSV = (str) => `"${String(str).replace(/"/g, '""')}"`;
+
+        // Hide fallback icon if image loads successfully
+        document.querySelector('.navbar img').onload = function() { document.getElementById('fallback-icon').style.display = 'none'; };
 
         // ================= FIREBASE SETUP =================
         // WARNING: Replace YOUR_API_KEY_HERE before publishing!
@@ -503,7 +551,15 @@
             auth.signInWithEmailAndPassword(e, p).then(() => { document.getElementById('loginModal').style.display = 'none'; alert("Welcome Admin!"); }).catch(err => alert("Login Failed: " + err.message));
         }
 
-        // ================= CLOUD SYNC LOGIC =================
+        // ================= CLOUD SYNC & SPLASH SCREEN LOGIC =================
+        function hideSplashScreen() {
+            setTimeout(() => {
+                const splash = document.getElementById('splash-screen');
+                splash.style.opacity = '0';
+                setTimeout(() => splash.style.display = 'none', 600);
+            }, 1500); // Minimum 1.5s display for visual effect
+        }
+
         async function loadDataFromFirebase() {
             const status = document.getElementById('cloudStatus');
             try {
@@ -523,12 +579,17 @@
                 status.style.color = '#16a34a'; status.style.background = '#dcfce7';
 
                 updateInventoryUI(); updateReports(); populateInvoiceDropdown();
+                hideSplashScreen();
+                
+                if (localInv.length > cloudInv.length) alert("DATA RESCUED from local memory! Please login and click Save to Cloud.");
+
             } catch (error) {
                 status.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Offline';
                 status.style.color = '#dc2626'; status.style.background = '#fee2e2';
                 inventory = JSON.parse(localStorage.getItem('ecuInventory_backup')) || JSON.parse(localStorage.getItem('ecuInventory')) || [];
                 salesLedger = JSON.parse(localStorage.getItem('ecuSales_backup')) || JSON.parse(localStorage.getItem('ecuSalesLedger')) || [];
                 updateInventoryUI(); updateReports();
+                hideSplashScreen();
             }
         }
 
@@ -789,6 +850,33 @@
             if(inv && confirm(`Mark invoice ${invNum} as Paid?`)) { inv.status = 'Paid'; inv.paymentType = 'Cash'; await saveData(); updateReports(); }
         }
 
+        // ================= EXPORTS =================
+        function triggerCSVDownload(csvContent, filename) {
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const a = document.createElement("a"); a.setAttribute("href", URL.createObjectURL(blob)); a.setAttribute("download", filename); document.body.appendChild(a); a.click(); a.remove();
+        }
+        function exportExcel(type) {
+            let csv = ""; let today = new Date().toISOString().split('T')[0];
+            if (type === 'inventory') {
+                csv = "Model Name,Old Parts,Compatibility,Avg Unit Cost,Retail Price,Qty in Stock,Total Asset Value\n";
+                inventory.forEach(i => { if(i.id !== 'SERVICES_FEE_TRACKER') csv += `${escapeCSV(i.name)},${escapeCSV(i.oldParts||'')},${escapeCSV(i.compat)},${i.cost},${i.retail},${i.qty},${i.cost * (i.qty > 0 ? i.qty : 0)}\n`; });
+                triggerCSVDownload(csv, `Inventory_${today}.csv`);
+            } else if (type === 'sales_ledger') {
+                csv = "Date,Invoice Number,Customer Name,Phone,Status,Total Invoice Value\n";
+                salesLedger.forEach(s => { let items = s.items ? s.items.map(i=>i.name).join(' | ') : s.itemsStr; csv += `${s.date},${s.invNum},${escapeCSV(s.customer)},${escapeCSV(s.phone||'')},${s.status||'Paid'},${s.total}\n`; });
+                triggerCSVDownload(csv, `Sales_Ledger_${today}.csv`);
+            } else if (type === 'sales_item') {
+                csv = "Model Name,Total Units Sold,Gross Revenue,Total COGS,Net Profit\n";
+                inventory.forEach(i => { if(i.soldQty > 0) csv += `${escapeCSV(i.name)},${i.soldQty},${i.revenue},${i.cogs},${i.profit}\n`; });
+                triggerCSVDownload(csv, `Sales_Per_Item_${today}.csv`);
+            }
+        }
+        function downloadBackup() { const a = document.createElement('a'); a.setAttribute("href", "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ inventory: inventory, salesLedger: salesLedger }))); a.setAttribute("download", `ECU_Backup.json`); document.body.appendChild(a); a.click(); a.remove(); }
+        function restoreBackup(event) {
+            if(!isAdmin) return; const file = event.target.files[0]; if (!file) return; const reader = new FileReader();
+            reader.onload = async function(e) { try { const data = JSON.parse(e.target.result); if (data.inventory && data.salesLedger) { inventory = data.inventory; salesLedger = data.salesLedger; await saveData(); updateInventoryUI(); updateReports(); alert("Restored!"); } } catch(err){} document.getElementById('backupFileInput').value = ''; }; reader.readAsText(file);
+        }
+
         // ================= REPORTS LOGIC =================
         function updateReports() {
             let assetValue = 0, totalRev = 0, totalCogs = 0, totalProfit = 0, totalUnits = 0, totalDiscounts = 0;
@@ -838,17 +926,6 @@
             const ctx = document.getElementById('revenuePieChart'); if(pieChartInstance) pieChartInstance.destroy(); 
             if(chartLabels.length > 0) pieChartInstance = new Chart(ctx, { type: 'doughnut', data: { labels: chartLabels, datasets: [{ data: chartData, backgroundColor: ['#1e3a8a', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'], borderWidth: 1 }] }, options: { responsive: true, plugins: { legend: { display: false } } } });
         }
-
-        // ================= EXPORTS & BACKUPS =================
-        function triggerCSVDownload(csvContent, filename) { const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }); const a = document.createElement("a"); a.setAttribute("href", URL.createObjectURL(blob)); a.setAttribute("download", filename); document.body.appendChild(a); a.click(); a.remove(); }
-        function exportExcel(type) {
-            let csv = ""; let today = new Date().toISOString().split('T')[0];
-            if (type === 'inventory') { csv = "Model Name,Old Parts,Compatibility,Avg Unit Cost,Retail Price,Qty in Stock,Total Asset Value\n"; inventory.forEach(i => { if(i.id !== 'SERVICES_FEE_TRACKER') csv += `${escapeCSV(i.name)},${escapeCSV(i.oldParts||'')},${escapeCSV(i.compat)},${i.cost},${i.retail},${i.qty},${i.cost * (i.qty > 0 ? i.qty : 0)}\n`; }); triggerCSVDownload(csv, `Inventory_${today}.csv`); } 
-            else if (type === 'sales_ledger') { csv = "Date,Invoice Number,Customer Name,Phone,Status,Total Invoice Value\n"; salesLedger.forEach(s => { csv += `${s.date},${s.invNum},${escapeCSV(s.customer)},${escapeCSV(s.phone||'')},${s.status||'Paid'},${s.total}\n`; }); triggerCSVDownload(csv, `Sales_Ledger_${today}.csv`); } 
-            else if (type === 'sales_item') { csv = "Model Name,Total Units Sold,Gross Revenue,Total COGS,Net Profit\n"; inventory.forEach(i => { if(i.soldQty > 0) csv += `${escapeCSV(i.name)},${i.soldQty},${i.revenue},${i.cogs},${i.profit}\n`; }); triggerCSVDownload(csv, `Sales_Per_Item_${today}.csv`); }
-        }
-        function downloadBackup() { const a = document.createElement('a'); a.setAttribute("href", "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ inventory: inventory, salesLedger: salesLedger }))); a.setAttribute("download", `ECU_Backup.json`); document.body.appendChild(a); a.click(); a.remove(); }
-        function restoreBackup(event) { if(!isAdmin) return; const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = async function(e) { try { const data = JSON.parse(e.target.result); if (data.inventory && data.salesLedger) { inventory = data.inventory; salesLedger = data.salesLedger; await saveData(); updateInventoryUI(); updateReports(); alert("Restored!"); } } catch(err){} document.getElementById('backupFileInput').value = ''; }; reader.readAsText(file); }
     </script>
 </body>
 </html>
