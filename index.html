@@ -169,7 +169,7 @@
     <nav class="navbar">
         <div class="logo">
             <!-- Navbar Logo (Direct link added here) -->
-            <img src="https://i.imgur.com/vHq4R8x.png" onerror="this.style.display='none'" style="height: 30px;">
+            <img src="https://i.imgur.com/5vRDO0F.png" onerror="this.style.display='none'" style="height: 30px;">
             <i class="fas fa-microchip" id="fallback-icon"></i> ECU Manager Pro
         </div>
         <div class="nav-links">
@@ -332,7 +332,6 @@
                     </div>
                 </div>
                 
-                <!-- Added Dropdown Chart Feature Here -->
                 <div class="card">
                     <div class="card-title">
                         <span><i class="fas fa-chart-bar" style="color: var(--primary);"></i> Revenue Breakdown</span>
@@ -433,9 +432,9 @@
             <div class="doc-header">
                 <div>
                     <!-- Invoice Logo (Direct link added here) -->
-                    <img src="https://i.imgur.com/vHq4R8x.png" onerror="this.style.display='none'" style="height: 50px; margin-bottom: 10px;">
+                    <img src="https://i.imgur.com/5vRDO0F.png" onerror="this.style.display='none'" style="height: 50px; margin-bottom: 10px;">
                     <h1>ECU MANAGER PRO</h1>
-                    <p>123 Generator Avenue, Power City, TX</p>
+                    <p>60 Street Meter, Erbil, Iraq</p>
                 </div>
                 <div style="text-align: right;">
                     <h2 style="color:#ccc; margin-bottom: 5px;">INVOICE</h2>
@@ -713,7 +712,7 @@
             document.getElementById('histTitle').innerText = `Movement History: ${item.name}`;
             const tbody = document.getElementById('historyBody'); tbody.innerHTML = '';
             [...(item.history||[])].sort((a,b) => new Date(b.date)-new Date(a.date)).forEach(r => {
-                let color = 'var(--primary)'; if(r.type === 'Sale') color = 'var(--success)'; if(r.type === 'Price Update' || r.type === 'Cost Update') color = 'var(--warning)';
+                let color = 'var(--primary)'; if(r.type === 'Sale') color = 'var(--success)'; if(r.type === 'Price Update' || r.type === 'Cost Update') color = 'var(--warning)'; if(r.type === 'Return') color = 'var(--danger)';
                 tbody.innerHTML += `<tr><td>${new Date(r.date).toLocaleDateString()}</td><td style="color:${color}; font-weight:600;">${r.type}</td><td>${r.qty}</td><td>${formatCur(r.price)}</td><td style="font-size:12px;">${r.note || ''}</td></tr>`;
             });
             document.getElementById('historyModal').style.display = 'block';
@@ -866,6 +865,52 @@
             if(inv && confirm(`Mark invoice ${invNum} as Paid?`)) { inv.status = 'Paid'; inv.paymentType = 'Cash'; await saveData(); updateReports(); }
         }
 
+        // ADDED FEATURE: Process Material Return / Refund
+        async function processReturn(invNum) {
+            if (!isAdmin) return alert("Admin login required to process returns.");
+            const inv = salesLedger.find(s => s.invNum === invNum);
+            if (!inv) return;
+            if (inv.status === 'Refunded') return alert("This invoice has already been refunded.");
+            
+            if (confirm(`Are you sure you want to return Invoice ${invNum}? This will restock the items and deduct from your revenue and profit.`)) {
+                const returnDate = new Date().toISOString().split('T')[0];
+                
+                // Reverse inventory metrics
+                if(inv.items) {
+                    inv.items.forEach(item => {
+                        // Find the item by name. If not found, it might be a custom service fee, so fallback to the tracker.
+                        let dbItem = inventory.find(i => i.name === item.name);
+                        if (!dbItem && item.qty === 1) dbItem = inventory.find(i => i.id === 'SERVICES_FEE_TRACKER'); 
+                        
+                        if (dbItem) {
+                            if (dbItem.id !== 'SERVICES_FEE_TRACKER') {
+                                dbItem.qty += item.qty; // Restock
+                            }
+                            dbItem.soldQty = Math.max(0, dbItem.soldQty - item.qty); // Reduce sold count
+                            
+                            const lineRev = item.total;
+                            const lineCogs = (dbItem.id === 'SERVICES_FEE_TRACKER') ? 0 : (dbItem.cost * item.qty);
+                            
+                            dbItem.revenue = Math.max(0, dbItem.revenue - lineRev);
+                            dbItem.cogs = Math.max(0, dbItem.cogs - lineCogs);
+                            dbItem.profit = dbItem.revenue - dbItem.cogs;
+                            
+                            dbItem.history = dbItem.history || [];
+                            dbItem.history.push({ date: returnDate, type: 'Return', qty: item.qty, price: item.price, note: `Refund for ${invNum}` });
+                        }
+                    });
+                }
+
+                // Update Invoice Status
+                inv.status = 'Refunded';
+                
+                await saveData();
+                updateInventoryUI();
+                updateReports();
+                alert("Return processed successfully. Stock and financials have been updated.");
+            }
+        }
+
         // ================= EXPORTS =================
         function triggerCSVDownload(csvContent, filename) {
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -907,7 +952,13 @@
             });
             if(itemSalesBody.innerHTML === '') itemSalesBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No items sold yet.</td></tr>';
             
-            salesLedger.forEach(s => totalDiscounts += (s.discount || 0));
+            // Do not subtract discounts from 'Refunded' invoices, since the revenue was already reversed.
+            salesLedger.forEach(s => {
+                if (s.status !== 'Refunded') {
+                    totalDiscounts += (s.discount || 0);
+                }
+            });
+            
             let actualNet = totalProfit - totalDiscounts; let actualRev = totalRev - totalDiscounts;
 
             document.getElementById('repAssetVal').innerText = formatCur(assetValue); document.getElementById('repTotalRev').innerText = formatCur(actualRev);
@@ -922,13 +973,19 @@
 
             const ledgerBody = document.getElementById('salesLedgerBody'); ledgerBody.innerHTML = '';
             [...salesLedger].sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(sale => {
-                let statBadge = sale.status === 'Unpaid' ? `<span class="badge badge-danger">Unpaid</span>` : `<span class="badge badge-success">Paid</span>`;
+                
+                let statBadge = '';
+                if (sale.status === 'Unpaid') statBadge = `<span class="badge badge-danger">Unpaid</span>`;
+                else if (sale.status === 'Refunded') statBadge = `<span class="badge" style="background:#cbd5e1; color:#334155; border-color:#94a3b8;">Refunded</span>`;
+                else statBadge = `<span class="badge badge-success">Paid</span>`;
+
                 let acts = `<div style="display:flex; gap:5px; justify-content:center;">`;
                 acts += `<button class="btn btn-warning btn-sm" style="background:#475569;" onclick="reprintInvoice('${sale.invNum}')" title="Print"><i class="fas fa-print"></i></button>`;
                 acts += `<button class="btn btn-danger btn-sm" onclick="downloadInvoicePDF('${sale.invNum}')" title="PDF"><i class="fas fa-file-pdf"></i></button>`;
                 if (isAdmin) {
                     acts += `<button class="btn btn-primary btn-sm" onclick="openEditModal('${sale.invNum}')" title="Edit Info"><i class="fas fa-edit"></i></button>`;
                     if(sale.status === 'Unpaid') acts += `<button class="btn btn-success btn-sm" onclick="markAsPaid('${sale.invNum}')" title="Mark Paid"><i class="fas fa-check"></i></button>`;
+                    if(sale.status !== 'Refunded') acts += `<button class="btn btn-danger btn-sm" onclick="processReturn('${sale.invNum}')" title="Refund Invoice" style="background:#991b1b;"><i class="fas fa-undo"></i></button>`;
                 }
                 acts += `</div>`;
                 
@@ -939,13 +996,13 @@
             const movingTbody = document.getElementById('repMovingBody'); movingTbody.innerHTML = '';
             [...inventory].sort((a,b) => (b.profit || 0) - (a.profit || 0)).slice(0, 5).forEach(i => { if((i.soldQty || 0) > 0 && i.id !== 'SERVICES_FEE_TRACKER') movingTbody.innerHTML += `<tr><td><strong>${i.name}</strong></td><td>${i.soldQty}</td><td style="color:var(--success);">${formatCur(i.profit)}</td></tr>`; });
 
-            // ADDED CHART FEATURE UPDATE LOGIC
+            // Store data for the chart toggle feature
             currentChartLabels = chartLabels;
             currentChartData = chartData;
             renderChart();
         }
 
-        // ADDED CHART FEATURE FUNCTION
+        // ADDED FEATURE: Function to render chart based on dropdown selection
         function renderChart() {
             const ctx = document.getElementById('revenueChart');
             if (!ctx) return;
