@@ -41,7 +41,6 @@
         .splash-footer { position: absolute; bottom: 30px; font-size: 12px; color: #64748b; letter-spacing: 1px; text-transform: uppercase; z-index: 2; }
         .splash-footer span { color: #3b82f6; font-weight: 700; }
 
-        /* Floating ECUs Background Animation */
         .bg-ecus { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
         .floating-ecu { position: absolute; color: rgba(59, 130, 246, 0.05); font-size: 100px; animation: floatUp linear infinite; bottom: -120px; }
         .ecu-1 { left: 10%; animation-duration: 12s; animation-delay: 0s; font-size: 80px; }
@@ -53,6 +52,21 @@
         @keyframes pulse { 0% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(59,130,246,0.4)); } 50% { transform: scale(1.05); filter: drop-shadow(0 0 20px rgba(59,130,246,0.6)); } 100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(59,130,246,0)); } }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes floatUp { 0% { transform: translateY(0) rotate(0deg); opacity: 1; } 100% { transform: translateY(-120vh) rotate(360deg); opacity: 0; } }
+
+        /* =========================================
+           🔔 TOAST NOTIFICATIONS (NEW FEATURE)
+           ========================================= */
+        #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 10000; display: flex; flex-direction: column; gap: 10px; }
+        .toast { min-width: 250px; padding: 15px 20px; border-radius: 8px; color: white; font-weight: 500; font-size: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 12px; animation: slideIn 0.3s ease-out forwards; cursor: pointer; }
+        .toast i { font-size: 18px; }
+        .toast.success { background-color: var(--success); border-left: 5px solid #14532d; }
+        .toast.error { background-color: var(--danger); border-left: 5px solid #7f1d1d; }
+        .toast.info { background-color: var(--primary); border-left: 5px solid #1e3a8a; }
+        .toast.warning { background-color: var(--warning); border-left: 5px solid #b45309; }
+        .toast.fadeOut { animation: fadeOut 0.3s ease-out forwards; }
+        
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes fadeOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
 
         /* =========================================
            APP UI STYLES
@@ -145,6 +159,9 @@
 </head>
 <body>
 
+    <!-- Container for UI Toasts -->
+    <div id="toast-container"></div>
+
     <!-- ================= SPLASH SCREEN ================= -->
     <div id="splash-screen">
         <div class="bg-ecus">
@@ -161,15 +178,14 @@
             <div class="splash-spinner" id="splashSpinner"></div>
         </div>
         <div class="splash-footer">
-            Developed by <span>Eng. Samul</span>
+            Developed by <span>Eng. Saad Mohammed</span>
         </div>
     </div>
 
     <!-- Navigation -->
     <nav class="navbar">
         <div class="logo">
-            <!-- Navbar Logo -->
-            <img src="https://i.imgur.com/vHq4R8x.png" onerror="this.style.display='none'" style="height: 30px;">
+            <img src="https://i.imgur.com/5vRDO0F.png" onerror="this.style.display='none'" style="height: 30px;">
             <i class="fas fa-microchip" id="fallback-icon"></i> ECU Manager Pro
         </div>
         <div class="nav-links">
@@ -394,7 +410,6 @@
             </div>
         </div>
 
-        <!-- Edit Invoice Modal -->
         <div id="editInvoiceModal" class="modal">
             <div class="modal-content" style="width: 400px;">
                 <span class="close-btn" onclick="document.getElementById('editInvoiceModal').style.display='none'">&times;</span>
@@ -431,7 +446,6 @@
         <div id="invoice-document" class="print-doc">
             <div class="doc-header">
                 <div>
-                    <!-- Invoice Logo -->
                     <img src="https://i.imgur.com/vHq4R8x.png" onerror="this.style.display='none'" style="height: 50px; margin-bottom: 10px;">
                     <h1>ECU MANAGER PRO</h1>
                     <p>123 Generator Avenue, Power City, TX</p>
@@ -488,12 +502,86 @@
 
     <!-- Application Logic -->
     <script>
+        // ================= UI ACCESSORIES (SOUNDS & TOASTS) =================
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx;
+
+        function playSound(type) {
+            try {
+                if (!audioCtx) audioCtx = new AudioContext();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                
+                const osc = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                osc.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                
+                const now = audioCtx.currentTime;
+                if (type === 'pop') {
+                    // Short, crisp UI pop
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(600, now);
+                    osc.frequency.exponentialRampToValueAtTime(800, now + 0.1);
+                    gainNode.gain.setValueAtTime(0.2, now);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                    osc.start(now); osc.stop(now + 0.1);
+                } else if (type === 'success') {
+                    // Two ascending bright notes (Chime)
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(440, now); // A4
+                    osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
+                    gainNode.gain.setValueAtTime(0, now);
+                    gainNode.gain.linearRampToValueAtTime(0.2, now + 0.05);
+                    gainNode.gain.linearRampToValueAtTime(0, now + 0.3);
+                    osc.start(now); osc.stop(now + 0.3);
+                } else if (type === 'error') {
+                    // Flat, low error buzz
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(150, now);
+                    osc.frequency.exponentialRampToValueAtTime(100, now + 0.3);
+                    gainNode.gain.setValueAtTime(0.2, now);
+                    gainNode.gain.linearRampToValueAtTime(0, now + 0.3);
+                    osc.start(now); osc.stop(now + 0.3);
+                }
+            } catch (e) { /* Ignore audio errors on unsupported browsers */ }
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            let icon = 'fa-check-circle';
+            if (type === 'error') icon = 'fa-times-circle';
+            if (type === 'info') icon = 'fa-info-circle';
+            if (type === 'warning') icon = 'fa-exclamation-triangle';
+            
+            toast.innerHTML = `<i class="fas ${icon}"></i> <span>${message}</span>`;
+            
+            // Click to dismiss early
+            toast.onclick = () => { 
+                toast.classList.add('fadeOut'); 
+                setTimeout(() => toast.remove(), 300); 
+            };
+            
+            container.appendChild(toast);
+            
+            // Auto dismiss after 3 seconds
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.classList.add('fadeOut');
+                    setTimeout(() => { if (toast.parentElement) toast.remove(); }, 300);
+                }
+            }, 3000);
+        }
+
         const formatCur = (num) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num || 0);
         const escapeCSV = (str) => `"${String(str).replace(/"/g, '""')}"`;
 
         document.querySelector('.navbar img').onload = function() { document.getElementById('fallback-icon').style.display = 'none'; };
 
         // ================= FIREBASE SETUP =================
+        // PASTE YOUR REAL API KEY BELOW
         const firebaseConfig = {
             apiKey: "AIzaSyCYswjDisG6BByRalql4YwA-qv0TjLNNFY", 
             databaseURL: "https://ecu-manager-a5f4a-default-rtdb.firebaseio.com"
@@ -554,15 +642,28 @@
         });
 
         function toggleAuthModal() {
-            if (isAdmin) auth.signOut().then(() => alert("Logged out successfully.")); 
-            else document.getElementById('loginModal').style.display = 'block';
+            if (isAdmin) {
+                auth.signOut().then(() => {
+                    showToast("Logged out successfully.", "info");
+                    playSound('pop');
+                });
+            } else {
+                document.getElementById('loginModal').style.display = 'block';
+            }
         }
         function loginAdmin() {
             const e = document.getElementById('authEmail').value, p = document.getElementById('authPassword').value;
-            auth.signInWithEmailAndPassword(e, p).then(() => { document.getElementById('loginModal').style.display = 'none'; alert("Welcome Admin!"); }).catch(err => alert("Login Failed: " + err.message));
+            auth.signInWithEmailAndPassword(e, p).then(() => { 
+                document.getElementById('loginModal').style.display = 'none'; 
+                showToast("Welcome back, Admin!", "success");
+                playSound('success');
+            }).catch(err => {
+                showToast("Login Failed: " + err.message, "error");
+                playSound('error');
+            });
         }
 
-        // ================= CLOUD SYNC & DYNAMIC SPLASH SCREEN LOGIC =================
+        // ================= CLOUD SYNC & SPLASH SCREEN LOGIC =================
         async function loadDataFromFirebase() {
             const status = document.getElementById('cloudStatus');
             try {
@@ -583,34 +684,34 @@
 
                 updateInventoryUI(); updateReports(); populateInvoiceDropdown();
                 
-                // DYNAMIC SPLASH SCREEN STATISTIC
+                // SPLASH SCREEN STATISTIC
                 let totalSold = 0;
                 inventory.forEach(i => { if(i.id !== 'SERVICES_FEE_TRACKER') totalSold += (i.soldQty || 0); });
                 
                 const splashText = document.getElementById('splashText');
                 const splashSpinner = document.getElementById('splashSpinner');
-                
                 splashSpinner.style.display = 'none';
                 splashText.style.fontSize = '18px';
                 splashText.style.color = '#10b981';
                 splashText.innerHTML = `<i class="fas fa-bolt" style="color:#f59e0b;"></i> Powering On! <strong>${totalSold}</strong> generators fixed using our ECUs.`;
                 
-                // Wait 1.5 seconds so user can read it, then hide
                 setTimeout(() => {
                     const splash = document.getElementById('splash-screen');
                     splash.style.opacity = '0';
                     setTimeout(() => splash.style.display = 'none', 600);
                 }, 1500);
                 
-                if (localInv.length > cloudInv.length) alert("DATA RESCUED from local memory! Please login and click Save to Cloud.");
+                if (localInv.length > cloudInv.length) {
+                    showToast("DATA RESCUED from local memory! Please login and click Save to Cloud.", "warning");
+                    playSound('error');
+                }
 
             } catch (error) {
                 status.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Offline';
                 status.style.color = '#dc2626'; status.style.background = '#fee2e2';
                 inventory = JSON.parse(localStorage.getItem('ecuInventory_backup')) || JSON.parse(localStorage.getItem('ecuInventory')) || [];
                 salesLedger = JSON.parse(localStorage.getItem('ecuSales_backup')) || JSON.parse(localStorage.getItem('ecuSalesLedger')) || [];
-                
-                updateInventoryUI(); updateReports(); populateInvoiceDropdown();
+                updateInventoryUI(); updateReports();
                 
                 const splash = document.getElementById('splash-screen');
                 splash.style.opacity = '0';
@@ -619,7 +720,10 @@
         }
 
         async function saveData() { 
-            if (!isAdmin) return alert("You must be logged in to save data.");
+            if (!isAdmin) {
+                playSound('error');
+                return showToast("You must be logged in to save data.", "error");
+            }
             const status = document.getElementById('cloudStatus'); status.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
             
             const dbState = { inventory: inventory, salesLedger: salesLedger };
@@ -629,11 +733,14 @@
             try {
                 await fetch(`${FIREBASE_URL}?auth=${authToken}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dbState) });
                 status.innerHTML = '<i class="fas fa-check-circle"></i> Saved to Cloud';
-            } catch (error) { status.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Save Failed'; }
+            } catch (error) { 
+                status.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Save Failed'; 
+            }
         }
         document.addEventListener("DOMContentLoaded", () => loadDataFromFirebase());
 
         function switchTab(tabName) {
+            playSound('pop');
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
             document.getElementById(`view-${tabName}`).classList.add('active');
@@ -664,25 +771,47 @@
                 if(!existing.compat.toLowerCase().includes(compat.toLowerCase())) existing.compat += ", " + compat; 
                 if(oldPartsInput && !(existing.oldParts||"").toLowerCase().includes(oldPartsInput.toLowerCase())) existing.oldParts = existing.oldParts ? existing.oldParts + ", " + oldPartsInput : oldPartsInput;
                 existing.history.push({ date: dateStr, type: 'Restock', qty: addedQty, price: addedCost, note: 'Added to existing stock' });
-                alert(`Merged. New Avg Cost: ${formatCur(existing.cost)}`);
+                
+                showToast(`Merged. New Avg Cost: ${formatCur(existing.cost)}`, "success");
+                playSound('success');
             } else {
                 inventory.push({ id: Date.now().toString(), name: nameInput, oldParts: oldPartsInput, compat: compat, cost: addedCost, retail: newRetail, qty: addedQty, soldQty: 0, revenue: 0, cogs: 0, profit: 0, history: [{ date: dateStr, type: 'Initial Stock', qty: addedQty, price: addedCost }] });
-                alert('New ECU added successfully!');
+                showToast('New ECU added successfully!', "success");
+                playSound('success');
             }
             await saveData(); updateInventoryUI(); 
             document.getElementById('ecuName').value = ''; document.getElementById('ecuOldParts').value = ''; document.getElementById('ecuCompat').value = ''; document.getElementById('ecuCost').value = ''; document.getElementById('ecuMarkup').value = ''; document.getElementById('ecuRetail').value = ''; document.getElementById('ecuQty').value = '1';
         });
 
-        async function deleteItem(id) { if(!isAdmin) return; if(confirm('Delete this ECU?')) { inventory = inventory.filter(i => i.id !== id); await saveData(); updateInventoryUI(); } }
+        async function deleteItem(id) { 
+            if(!isAdmin) return; 
+            if(confirm('Delete this ECU permanently?')) { 
+                inventory = inventory.filter(i => i.id !== id); 
+                await saveData(); 
+                updateInventoryUI(); 
+                showToast("Item deleted.", "info");
+                playSound('pop');
+            } 
+        }
         async function editPrice(id) {
             if(!isAdmin) return; let item = inventory.find(i => i.id === id); if(!item) return;
             let val = prompt(`New Retail Price for ${item.name}:`, item.retail);
-            if(val !== null && !isNaN(parseFloat(val)) && parseFloat(val) >= 0) { item.retail = parseFloat(val); item.history = item.history || []; item.history.push({ date: new Date().toISOString().split('T')[0], type: 'Price Update', qty: '-', price: item.retail, note: 'Manual' }); await saveData(); updateInventoryUI(); populateInvoiceDropdown(); }
+            if(val !== null && !isNaN(parseFloat(val)) && parseFloat(val) >= 0) { 
+                item.retail = parseFloat(val); item.history = item.history || []; 
+                item.history.push({ date: new Date().toISOString().split('T')[0], type: 'Price Update', qty: '-', price: item.retail, note: 'Manual' }); 
+                await saveData(); updateInventoryUI(); populateInvoiceDropdown(); 
+                showToast("Price updated.", "success"); playSound('pop');
+            }
         }
         async function editCost(id) {
             if(!isAdmin) return; let item = inventory.find(i => i.id === id); if(!item) return;
             let val = prompt(`New Avg Cost for ${item.name}:`, item.cost);
-            if(val !== null && !isNaN(parseFloat(val)) && parseFloat(val) >= 0) { item.cost = parseFloat(val); item.history = item.history || []; item.history.push({ date: new Date().toISOString().split('T')[0], type: 'Cost Update', qty: '-', price: item.cost, note: 'Manual' }); await saveData(); updateInventoryUI(); updateReports(); }
+            if(val !== null && !isNaN(parseFloat(val)) && parseFloat(val) >= 0) { 
+                item.cost = parseFloat(val); item.history = item.history || []; 
+                item.history.push({ date: new Date().toISOString().split('T')[0], type: 'Cost Update', qty: '-', price: item.cost, note: 'Manual' }); 
+                await saveData(); updateInventoryUI(); updateReports(); 
+                showToast("Cost updated.", "success"); playSound('pop');
+            }
         }
 
         function filterInventory() {
@@ -729,6 +858,7 @@
         }
 
         function downloadInventoryPDF() {
+            playSound('pop');
             document.getElementById('docInvRepDate').innerText = new Date().toLocaleDateString();
             const docBody = document.getElementById('docInventoryBody'); docBody.innerHTML = '';
             inventory.forEach(item => { if(item.id !== 'SERVICES_FEE_TRACKER') docBody.innerHTML += `<tr><td style="padding:6px; border:1px solid #ccc;">${item.name}</td><td style="padding:6px; border:1px solid #ccc; text-align:center;">${item.qty}</td><td style="padding:6px; border:1px solid #ccc; text-align:right;">${formatCur(item.cost * (item.qty > 0 ? item.qty : 0))}</td></tr>`; });
@@ -745,13 +875,35 @@
         function addToInvoice() {
             if(!isAdmin) return;
             const itemId = document.getElementById('invItemSelect').value; const qty = parseInt(document.getElementById('invQty').value);
-            if(!itemId || qty <= 0) return alert("Select item and quantity.");
-            const invItem = inventory.find(i => i.id === itemId); if(qty > invItem.qty) return alert(`Not enough stock!`);
+            
+            if(!itemId || qty <= 0) {
+                playSound('error'); return showToast("Select an item and quantity.", "error");
+            }
+            
+            const invItem = inventory.find(i => i.id === itemId); 
+            if(qty > invItem.qty) {
+                playSound('error'); return showToast("Not enough stock available!", "error");
+            }
+            
             const existing = currentInvoice.find(i => i.id === itemId);
-            if(existing) { if (existing.qty + qty > invItem.qty) return alert("Exceeds stock."); existing.qty += qty; } else currentInvoice.push({ ...invItem, qty: qty });
+            if(existing) { 
+                if (existing.qty + qty > invItem.qty) {
+                    playSound('error'); return showToast("Quantity exceeds available stock.", "error");
+                }
+                existing.qty += qty; 
+            } else {
+                currentInvoice.push({ ...invItem, qty: qty });
+            }
+            
+            playSound('pop');
             renderPendingInvoice();
         }
-        function removeInvoiceItem(id) { currentInvoice = currentInvoice.filter(i => i.id !== id); renderPendingInvoice(); }
+        
+        function removeInvoiceItem(id) { 
+            currentInvoice = currentInvoice.filter(i => i.id !== id); 
+            playSound('pop');
+            renderPendingInvoice(); 
+        }
 
         function renderPendingInvoice() {
             const body = document.getElementById('pendingInvoiceBody'); body.innerHTML = ''; let subtotal = 0;
@@ -769,7 +921,9 @@
 
         async function finalizeInvoice() {
             let feeAmount = parseFloat(document.getElementById('invFeeAmount').value) || 0;
-            if(!isAdmin || (currentInvoice.length === 0 && feeAmount <= 0)) return alert("Add items to generate invoice.");
+            if(!isAdmin || (currentInvoice.length === 0 && feeAmount <= 0)) {
+                playSound('error'); return showToast("Add items to generate an invoice.", "error");
+            }
             
             const invNum = "INV-" + Math.floor(10000 + Math.random() * 90000);
             const customerName = document.getElementById('invCustomer').value || "Walk-in";
@@ -806,7 +960,13 @@
             const invoiceRecord = { date: saleDate, time: saleTime, invNum: invNum, customer: customerName, phone: phone, paymentType: payType, dueDate: dueDate, items: itemsToSave, subtotal: subtotal, discount: discount, total: (subtotal - discount), status: payType === 'Cash' ? 'Paid' : 'Unpaid' };
             salesLedger.push(invoiceRecord);
 
-            await saveData(); updateInventoryUI(); printInvoiceFromData(invoiceRecord);
+            await saveData(); 
+            updateInventoryUI(); 
+            
+            showToast("Invoice Generated Successfully!", "success");
+            playSound('success');
+            
+            printInvoiceFromData(invoiceRecord);
             
             setTimeout(() => { 
                 currentInvoice = []; document.getElementById('invFeeName').value = ''; document.getElementById('invFeeAmount').value = '0'; document.getElementById('invDiscount').value = '0'; renderPendingInvoice(); populateInvoiceDropdown(); 
@@ -839,15 +999,16 @@
             setTimeout(() => document.body.classList.remove('print-invoice'), 500);
         }
 
-        function reprintInvoice(invNum) { const inv = salesLedger.find(s => s.invNum === invNum); if(inv) printInvoiceFromData(inv); }
+        function reprintInvoice(invNum) { const inv = salesLedger.find(s => s.invNum === invNum); if(inv) { playSound('pop'); printInvoiceFromData(inv); } }
         function downloadInvoicePDF(invNum) {
+            playSound('pop');
             const inv = salesLedger.find(s => s.invNum === invNum); if(!inv) return;
             populateInvoiceDoc(inv); const el = document.getElementById('invoice-document'); el.style.display = 'block';
             html2pdf().set({ margin: 10, filename: `Invoice_${invNum}.pdf`, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } }).from(el).save().then(() => el.style.display = 'none');
         }
 
         function openEditModal(invNum) {
-            if(!isAdmin) return alert("Admin login required to edit invoices.");
+            if(!isAdmin) return showToast("Admin login required.", "error");
             const inv = salesLedger.find(s => s.invNum === invNum); if(!inv) return;
             document.getElementById('editInvNum').value = invNum;
             document.getElementById('editInvCustomer').value = inv.customer;
@@ -867,19 +1028,28 @@
                 inv.paymentType = (inv.status === 'Paid') ? 'Cash' : 'Debit';
                 inv.dueDate = document.getElementById('editInvDueDate').value;
                 await saveData(); updateReports(); document.getElementById('editInvoiceModal').style.display = 'none';
+                showToast("Invoice updated successfully.", "success");
+                playSound('success');
             }
         }
         
         async function markAsPaid(invNum) {
             if(!isAdmin) return; const inv = salesLedger.find(s => s.invNum === invNum);
-            if(inv && confirm(`Mark invoice ${invNum} as Paid?`)) { inv.status = 'Paid'; inv.paymentType = 'Cash'; await saveData(); updateReports(); }
+            if(inv && confirm(`Mark invoice ${invNum} as Paid?`)) { 
+                inv.status = 'Paid'; inv.paymentType = 'Cash'; 
+                await saveData(); updateReports(); 
+                showToast("Invoice marked as Paid.", "success");
+                playSound('success');
+            }
         }
 
         async function processReturn(invNum) {
-            if (!isAdmin) return alert("Admin login required to process returns.");
+            if (!isAdmin) return showToast("Admin login required.", "error");
             const inv = salesLedger.find(s => s.invNum === invNum);
             if (!inv) return;
-            if (inv.status === 'Refunded') return alert("This invoice has already been refunded.");
+            if (inv.status === 'Refunded') {
+                playSound('error'); return showToast("This invoice has already been refunded.", "warning");
+            }
             
             if (confirm(`Are you sure you want to return Invoice ${invNum}? This will restock the items and deduct from your revenue and profit.`)) {
                 const returnDate = new Date().toISOString().split('T')[0];
@@ -909,23 +1079,25 @@
                 }
                 inv.status = 'Refunded';
                 await saveData(); updateInventoryUI(); updateReports();
-                alert("Return processed successfully. Stock and financials have been updated.");
+                showToast("Return processed successfully.", "success");
+                playSound('success');
             }
         }
 
-        // ADDED FEATURE: Permanently Delete Invoice Record
         async function deleteInvoice(invNum) {
             if (!isAdmin) return;
             if (confirm(`CRITICAL WARNING:\nAre you sure you want to PERMANENTLY DELETE Invoice ${invNum} from the ledger?\n\nNote: If the customer brought the item back, press 'Cancel' and use the Refund (Undo) button instead to fix your inventory. Deleting this will only erase the paper trail.`)) {
                 salesLedger = salesLedger.filter(s => s.invNum !== invNum);
                 await saveData();
                 updateReports();
-                alert(`Invoice ${invNum} has been permanently deleted.`);
+                showToast(`Invoice ${invNum} deleted.`, "info");
+                playSound('pop');
             }
         }
 
         // ================= EXPORTS =================
         function triggerCSVDownload(csvContent, filename) {
+            playSound('pop');
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const a = document.createElement("a"); a.setAttribute("href", URL.createObjectURL(blob)); a.setAttribute("download", filename); document.body.appendChild(a); a.click(); a.remove();
         }
@@ -945,10 +1117,25 @@
                 triggerCSVDownload(csv, `Sales_Per_Item_${today}.csv`);
             }
         }
-        function downloadBackup() { const a = document.createElement('a'); a.setAttribute("href", "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ inventory: inventory, salesLedger: salesLedger }))); a.setAttribute("download", `ECU_Backup.json`); document.body.appendChild(a); a.click(); a.remove(); }
+        function downloadBackup() { 
+            playSound('pop');
+            const a = document.createElement('a'); a.setAttribute("href", "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ inventory: inventory, salesLedger: salesLedger }))); a.setAttribute("download", `ECU_Backup.json`); document.body.appendChild(a); a.click(); a.remove(); 
+        }
         function restoreBackup(event) {
             if(!isAdmin) return; const file = event.target.files[0]; if (!file) return; const reader = new FileReader();
-            reader.onload = async function(e) { try { const data = JSON.parse(e.target.result); if (data.inventory && data.salesLedger) { inventory = data.inventory; salesLedger = data.salesLedger; await saveData(); updateInventoryUI(); updateReports(); alert("Restored!"); } } catch(err){} document.getElementById('backupFileInput').value = ''; }; reader.readAsText(file);
+            reader.onload = async function(e) { 
+                try { 
+                    const data = JSON.parse(e.target.result); 
+                    if (data.inventory && data.salesLedger) { 
+                        inventory = data.inventory; salesLedger = data.salesLedger; 
+                        await saveData(); updateInventoryUI(); updateReports(); 
+                        showToast("Data Restored Successfully!", "success");
+                        playSound('success');
+                    } 
+                } catch(err){ showToast("Invalid backup file.", "error"); playSound('error'); } 
+                document.getElementById('backupFileInput').value = ''; 
+            }; 
+            reader.readAsText(file);
         }
 
         // ================= REPORTS LOGIC =================
@@ -998,8 +1185,6 @@
                     acts += `<button class="btn btn-primary btn-sm" onclick="openEditModal('${sale.invNum}')" title="Edit Info"><i class="fas fa-edit"></i></button>`;
                     if(sale.status === 'Unpaid') acts += `<button class="btn btn-success btn-sm" onclick="markAsPaid('${sale.invNum}')" title="Mark Paid"><i class="fas fa-check"></i></button>`;
                     if(sale.status !== 'Refunded') acts += `<button class="btn btn-danger btn-sm" onclick="processReturn('${sale.invNum}')" title="Refund Invoice" style="background:#991b1b;"><i class="fas fa-undo"></i></button>`;
-                    
-                    // ADDED FEATURE: The Trash / Hard Delete Button
                     acts += `<button class="btn btn-danger btn-sm" onclick="deleteInvoice('${sale.invNum}')" title="Permanently Delete Record" style="background:#dc2626;"><i class="fas fa-trash-alt"></i></button>`;
                 }
                 acts += `</div>`;
