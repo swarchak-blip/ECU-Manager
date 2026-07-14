@@ -36,8 +36,8 @@
         .splash-content { position: relative; z-index: 2; text-align: center; }
         .splash-logo { font-size: 50px; color: #3b82f6; margin-bottom: 20px; animation: pulse 2s infinite; }
         .splash-title { font-size: 32px; font-weight: 700; letter-spacing: 2px; margin-bottom: 10px; }
-        .splash-subtitle { font-size: 14px; color: #94a3b8; margin-bottom: 40px; }
-        .splash-spinner { border: 4px solid rgba(255,255,255,0.1); border-left-color: #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto; }
+        .splash-subtitle { font-size: 15px; color: #94a3b8; margin-bottom: 40px; transition: 0.3s; }
+        .splash-spinner { border: 4px solid rgba(255,255,255,0.1); border-left-color: #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto; transition: 0.3s;}
         .splash-footer { position: absolute; bottom: 30px; font-size: 12px; color: #64748b; letter-spacing: 1px; text-transform: uppercase; z-index: 2; }
         .splash-footer span { color: #3b82f6; font-weight: 700; }
 
@@ -157,8 +157,8 @@
         <div class="splash-content">
             <div class="splash-logo"><i class="fas fa-microchip"></i></div>
             <div class="splash-title">ECU MANAGER PRO</div>
-            <div class="splash-subtitle">Connecting to Cloud Database...</div>
-            <div class="splash-spinner"></div>
+            <div class="splash-subtitle" id="splashText">Connecting to Cloud Database...</div>
+            <div class="splash-spinner" id="splashSpinner"></div>
         </div>
         <div class="splash-footer">
             Developed by <span>Eng. Samul</span>
@@ -168,7 +168,7 @@
     <!-- Navigation -->
     <nav class="navbar">
         <div class="logo">
-            <!-- Navbar Logo (Direct link added here) -->
+            <!-- Navbar Logo -->
             <img src="https://i.imgur.com/vHq4R8x.png" onerror="this.style.display='none'" style="height: 30px;">
             <i class="fas fa-microchip" id="fallback-icon"></i> ECU Manager Pro
         </div>
@@ -431,7 +431,7 @@
         <div id="invoice-document" class="print-doc">
             <div class="doc-header">
                 <div>
-                    <!-- Invoice Logo (Direct link added here) -->
+                    <!-- Invoice Logo -->
                     <img src="https://i.imgur.com/vHq4R8x.png" onerror="this.style.display='none'" style="height: 50px; margin-bottom: 10px;">
                     <h1>ECU MANAGER PRO</h1>
                     <p>123 Generator Avenue, Power City, TX</p>
@@ -491,11 +491,9 @@
         const formatCur = (num) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num || 0);
         const escapeCSV = (str) => `"${String(str).replace(/"/g, '""')}"`;
 
-        // Hide fallback icon if image loads successfully
         document.querySelector('.navbar img').onload = function() { document.getElementById('fallback-icon').style.display = 'none'; };
 
         // ================= FIREBASE SETUP =================
-        // WARNING: Replace YOUR_API_KEY_HERE before publishing!
         const firebaseConfig = {
             apiKey: "AIzaSyCYswjDisG6BByRalql4YwA-qv0TjLNNFY", 
             databaseURL: "https://ecu-manager-a5f4a-default-rtdb.firebaseio.com"
@@ -512,13 +510,11 @@
         let authToken = null;
         let isAdmin = false;
         
-        // Added globals for chart feature
         let currentChartLabels = [];
         let currentChartData = [];
 
         document.getElementById('ecuDate').value = new Date().toISOString().split('T')[0];
 
-        // Auto-calculate markup
         document.getElementById('ecuCost').addEventListener('input', calculateRetail);
         document.getElementById('ecuMarkup').addEventListener('input', calculateRetail);
         function calculateRetail() {
@@ -566,15 +562,7 @@
             auth.signInWithEmailAndPassword(e, p).then(() => { document.getElementById('loginModal').style.display = 'none'; alert("Welcome Admin!"); }).catch(err => alert("Login Failed: " + err.message));
         }
 
-        // ================= CLOUD SYNC & SPLASH SCREEN LOGIC =================
-        function hideSplashScreen() {
-            setTimeout(() => {
-                const splash = document.getElementById('splash-screen');
-                splash.style.opacity = '0';
-                setTimeout(() => splash.style.display = 'none', 600);
-            }, 1500); // Minimum 1.5s display for visual effect
-        }
-
+        // ================= CLOUD SYNC & DYNAMIC SPLASH SCREEN LOGIC =================
         async function loadDataFromFirebase() {
             const status = document.getElementById('cloudStatus');
             try {
@@ -594,7 +582,25 @@
                 status.style.color = '#16a34a'; status.style.background = '#dcfce7';
 
                 updateInventoryUI(); updateReports(); populateInvoiceDropdown();
-                hideSplashScreen();
+                
+                // DYNAMIC SPLASH SCREEN STATISTIC
+                let totalSold = 0;
+                inventory.forEach(i => { if(i.id !== 'SERVICES_FEE_TRACKER') totalSold += (i.soldQty || 0); });
+                
+                const splashText = document.getElementById('splashText');
+                const splashSpinner = document.getElementById('splashSpinner');
+                
+                splashSpinner.style.display = 'none';
+                splashText.style.fontSize = '18px';
+                splashText.style.color = '#10b981';
+                splashText.innerHTML = `<i class="fas fa-bolt" style="color:#f59e0b;"></i> Powering On! <strong>${totalSold}</strong> generators fixed using our ECUs.`;
+                
+                // Wait 1.5 seconds so user can read it, then hide
+                setTimeout(() => {
+                    const splash = document.getElementById('splash-screen');
+                    splash.style.opacity = '0';
+                    setTimeout(() => splash.style.display = 'none', 600);
+                }, 1500);
                 
                 if (localInv.length > cloudInv.length) alert("DATA RESCUED from local memory! Please login and click Save to Cloud.");
 
@@ -603,8 +609,12 @@
                 status.style.color = '#dc2626'; status.style.background = '#fee2e2';
                 inventory = JSON.parse(localStorage.getItem('ecuInventory_backup')) || JSON.parse(localStorage.getItem('ecuInventory')) || [];
                 salesLedger = JSON.parse(localStorage.getItem('ecuSales_backup')) || JSON.parse(localStorage.getItem('ecuSalesLedger')) || [];
-                updateInventoryUI(); updateReports();
-                hideSplashScreen();
+                
+                updateInventoryUI(); updateReports(); populateInvoiceDropdown();
+                
+                const splash = document.getElementById('splash-screen');
+                splash.style.opacity = '0';
+                setTimeout(() => splash.style.display = 'none', 600);
             }
         }
 
@@ -865,7 +875,6 @@
             if(inv && confirm(`Mark invoice ${invNum} as Paid?`)) { inv.status = 'Paid'; inv.paymentType = 'Cash'; await saveData(); updateReports(); }
         }
 
-        // ADDED FEATURE: Process Material Return / Refund
         async function processReturn(invNum) {
             if (!isAdmin) return alert("Admin login required to process returns.");
             const inv = salesLedger.find(s => s.invNum === invNum);
@@ -875,18 +884,16 @@
             if (confirm(`Are you sure you want to return Invoice ${invNum}? This will restock the items and deduct from your revenue and profit.`)) {
                 const returnDate = new Date().toISOString().split('T')[0];
                 
-                // Reverse inventory metrics
                 if(inv.items) {
                     inv.items.forEach(item => {
-                        // Find the item by name. If not found, it might be a custom service fee, so fallback to the tracker.
                         let dbItem = inventory.find(i => i.name === item.name);
                         if (!dbItem && item.qty === 1) dbItem = inventory.find(i => i.id === 'SERVICES_FEE_TRACKER'); 
                         
                         if (dbItem) {
                             if (dbItem.id !== 'SERVICES_FEE_TRACKER') {
-                                dbItem.qty += item.qty; // Restock
+                                dbItem.qty += item.qty; 
                             }
-                            dbItem.soldQty = Math.max(0, dbItem.soldQty - item.qty); // Reduce sold count
+                            dbItem.soldQty = Math.max(0, dbItem.soldQty - item.qty); 
                             
                             const lineRev = item.total;
                             const lineCogs = (dbItem.id === 'SERVICES_FEE_TRACKER') ? 0 : (dbItem.cost * item.qty);
@@ -900,14 +907,20 @@
                         }
                     });
                 }
-
-                // Update Invoice Status
                 inv.status = 'Refunded';
-                
-                await saveData();
-                updateInventoryUI();
-                updateReports();
+                await saveData(); updateInventoryUI(); updateReports();
                 alert("Return processed successfully. Stock and financials have been updated.");
+            }
+        }
+
+        // ADDED FEATURE: Permanently Delete Invoice Record
+        async function deleteInvoice(invNum) {
+            if (!isAdmin) return;
+            if (confirm(`CRITICAL WARNING:\nAre you sure you want to PERMANENTLY DELETE Invoice ${invNum} from the ledger?\n\nNote: If the customer brought the item back, press 'Cancel' and use the Refund (Undo) button instead to fix your inventory. Deleting this will only erase the paper trail.`)) {
+                salesLedger = salesLedger.filter(s => s.invNum !== invNum);
+                await saveData();
+                updateReports();
+                alert(`Invoice ${invNum} has been permanently deleted.`);
             }
         }
 
@@ -952,7 +965,6 @@
             });
             if(itemSalesBody.innerHTML === '') itemSalesBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No items sold yet.</td></tr>';
             
-            // Do not subtract discounts from 'Refunded' invoices, since the revenue was already reversed.
             salesLedger.forEach(s => {
                 if (s.status !== 'Refunded') {
                     totalDiscounts += (s.discount || 0);
@@ -986,6 +998,9 @@
                     acts += `<button class="btn btn-primary btn-sm" onclick="openEditModal('${sale.invNum}')" title="Edit Info"><i class="fas fa-edit"></i></button>`;
                     if(sale.status === 'Unpaid') acts += `<button class="btn btn-success btn-sm" onclick="markAsPaid('${sale.invNum}')" title="Mark Paid"><i class="fas fa-check"></i></button>`;
                     if(sale.status !== 'Refunded') acts += `<button class="btn btn-danger btn-sm" onclick="processReturn('${sale.invNum}')" title="Refund Invoice" style="background:#991b1b;"><i class="fas fa-undo"></i></button>`;
+                    
+                    // ADDED FEATURE: The Trash / Hard Delete Button
+                    acts += `<button class="btn btn-danger btn-sm" onclick="deleteInvoice('${sale.invNum}')" title="Permanently Delete Record" style="background:#dc2626;"><i class="fas fa-trash-alt"></i></button>`;
                 }
                 acts += `</div>`;
                 
@@ -996,13 +1011,11 @@
             const movingTbody = document.getElementById('repMovingBody'); movingTbody.innerHTML = '';
             [...inventory].sort((a,b) => (b.profit || 0) - (a.profit || 0)).slice(0, 5).forEach(i => { if((i.soldQty || 0) > 0 && i.id !== 'SERVICES_FEE_TRACKER') movingTbody.innerHTML += `<tr><td><strong>${i.name}</strong></td><td>${i.soldQty}</td><td style="color:var(--success);">${formatCur(i.profit)}</td></tr>`; });
 
-            // Store data for the chart toggle feature
             currentChartLabels = chartLabels;
             currentChartData = chartData;
             renderChart();
         }
 
-        // ADDED FEATURE: Function to render chart based on dropdown selection
         function renderChart() {
             const ctx = document.getElementById('revenueChart');
             if (!ctx) return;
